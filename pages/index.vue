@@ -1,10 +1,34 @@
 <template>
   <div>
-    <h1 class="text-4xl font-bold text-center mt-10">
-      Howzit - Test Page
-    </h1>
-    <p class="text-center mt-4">
-      If you see this, Nuxt is working!
-    </p>
+    <AppHeader />
+    
+    <main>
+      <HeroSection />
+      <SocialProof />
+      <FeaturesSection />
+      <!-- Add more sections as we build them -->
+      <!-- <HowItWorks /> -->
+      <!-- <Testimonials /> -->
+      <!-- <FAQ /> -->
+      <!-- <FinalCTA /> -->
+    </main>
+    
+    <!-- Footer will go here -->
+    
+    <!-- Floating elements -->
+    <!-- <LiveNotifications /> -->
   </div>
 </template>
+
+<script setup>
+// SEO
+useHead({
+  title: 'Howzit - Surf Forecasts That Don\'t Suck',
+  meta: [
+    { 
+      name: 'description', 
+      content: 'Real-time surf reports from locals in the water. No ads, no bloat, no BS. Join 2,847 surfers already getting better forecasts.' 
+    }
+  ]
+})
+</script>

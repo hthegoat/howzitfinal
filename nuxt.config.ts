@@ -9,6 +9,15 @@ export default defineNuxtConfig({
       Inter: [400, 500, 600, 700, 800, 900]
     }
   },
+  components: {
+    dirs: [
+      {
+        path: '~/components',
+        pathPrefix: false,
+        extensions: ['vue']
+      }
+    ]
+  },
   app: {
     head: {
       title: 'Howzit - Surf Forecasts That Don\'t Suck',

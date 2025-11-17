@@ -6,17 +6,13 @@
       <HeroSection />
       <SocialProof />
       <FeaturesSection />
-      <!-- Add more sections as we build them -->
-      <!-- <HowItWorks /> -->
-      <!-- <Testimonials /> -->
-      <!-- <FAQ /> -->
-      <!-- <FinalCTA /> -->
+      <HowItWorks />
+      <Testimonials />
+      <FAQ />
+      <FinalCTA />
     </main>
     
-    <!-- Footer will go here -->
-    
-    <!-- Floating elements -->
-    <!-- <LiveNotifications /> -->
+    <AppFooter />
   </div>
 </template>
 

@@ -268,6 +268,9 @@
 <script setup>
 import { ref } from 'vue'
 
+definePageMeta({
+  auth: false
+})
 // NO AUTHENTICATION - Removed definePageMeta
 const route = useRoute()
 const spotName = route.params.spot 

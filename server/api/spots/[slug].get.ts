@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const { data, error } = await client
     .from('spots')
     .select('*')
-    .eq('slug', slug)
+    .eq('slug', 'slug')
     .single()
 
   if (error) {

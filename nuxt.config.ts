@@ -1,7 +1,9 @@
 export default defineNuxtConfig({
   modules: [
     '@nuxtjs/tailwindcss',
-    '@nuxtjs/google-fonts'
+    '@nuxtjs/google-fonts',
+        '@nuxtjs/supabase',
+
   ],
   //css: ['~/assets/css/main.css'],
   googleFonts: {

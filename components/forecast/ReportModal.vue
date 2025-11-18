@@ -1,21 +1,22 @@
 <template>
-  <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg max-w-md w-full p-6 border-2 border-black">
-      <h2 class="text-2xl font-black mb-4">Add Your Report</h2>
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white border-3 border-black rounded-lg max-w-md w-full p-6">
+      <h2 class="text-2xl font-black mb-4">Post Live Report</h2>
       
       <form @submit.prevent="handleSubmit">
         <!-- Rating -->
         <div class="mb-4">
-          <label class="block font-bold mb-2">How's it out there?</label>
+          <label class="block font-bold mb-2">Rating</label>
           <div class="flex gap-2">
             <button
               v-for="n in 5"
               :key="n"
               type="button"
               @click="rating = n"
-              class="text-2xl"
+              :class="rating >= n ? 'bg-black text-white' : 'bg-gray-200'"
+              class="w-12 h-12 rounded-lg font-bold text-lg"
             >
-              {{ n <= rating ? '★' : '☆' }}
+              {{ n }}
             </button>
           </div>
         </div>
@@ -25,9 +26,9 @@
           <label class="block font-bold mb-2">Conditions</label>
           <textarea
             v-model="comment"
-            rows="3"
-            class="w-full px-3 py-2 border-2 border-black rounded-lg"
-            placeholder="What are the conditions like?"
+            rows="4"
+            placeholder="Describe the conditions..."
+            class="w-full border-2 border-black rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-black"
             required
           ></textarea>
         </div>
@@ -54,13 +55,13 @@
           <button
             type="button"
             @click="$emit('close')"
-            class="flex-1 px-4 py-2 border-2 border-black rounded-lg font-bold"
+            class="flex-1 px-4 py-2 border-2 border-black rounded-lg font-bold hover:bg-gray-100"
           >
             Cancel
           </button>
           <button
             type="submit"
-            class="flex-1 px-4 py-2 bg-black text-white rounded-lg font-bold"
+            class="flex-1 px-4 py-2 bg-black text-white rounded-lg font-bold hover:bg-gray-800"
           >
             Post Report
           </button>

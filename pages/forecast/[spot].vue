@@ -6,6 +6,13 @@
         <div class="flex items-center justify-between">
           <NuxtLink to="/" class="text-2xl font-black">HOWZIT</NuxtLink>
           <div class="flex items-center gap-4">
+            <button 
+              @click="refresh"
+              class="p-2 hover:bg-gray-100 rounded-lg"
+              :class="{ 'animate-spin': loading }"
+            >
+              🔄
+            </button>
             <button class="p-2 hover:bg-gray-100 rounded-lg">
               <HeartIcon :filled="isFavorite" class="w-6 h-6" />
             </button>
@@ -14,7 +21,27 @@
       </div>
     </header>
 
-    <div class="container mx-auto px-4 py-8">
+    <!-- Loading State -->
+    <div v-if="loading && !forecast" class="container mx-auto px-4 py-20 text-center">
+      <div class="text-4xl mb-4">🌊</div>
+      <p class="text-xl font-bold">Loading forecast...</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="container mx-auto px-4 py-20 text-center">
+      <div class="text-4xl mb-4">⚠️</div>
+      <p class="text-xl font-bold mb-2">Couldn't load forecast</p>
+      <p class="text-gray-600 mb-4">{{ error }}</p>
+      <button 
+        @click="refresh"
+        class="px-6 py-3 bg-black text-white rounded-lg font-bold"
+      >
+        Try Again
+      </button>
+    </div>
+
+    <!-- Main Content -->
+    <div v-else class="container mx-auto px-4 py-8">
       <!-- Breadcrumbs -->
       <div class="text-sm mb-4">
         <NuxtLink to="/" class="text-gray-600 hover:text-black">Home</NuxtLink>
@@ -24,40 +51,53 @@
         <span class="font-bold">{{ spotName }}</span>
       </div>
 
+      <!-- Data Source Info -->
+      <div v-if="forecast && !forecast.success" class="mb-4 p-3 bg-yellow-100 border-2 border-yellow-600 rounded-lg text-sm">
+        ⚠️ Using fallback data - {{ forecast.note }}
+      </div>
+
       <div class="grid lg:grid-cols-3 gap-6">
         <!-- Main Content -->
         <div class="lg:col-span-2 space-y-6">
-          <!-- Spot Header -->
+          <!-- Spot Header with REAL DATA -->
           <div class="bg-white border-3 border-black rounded-lg p-6">
             <div class="flex items-start justify-between mb-4">
               <div>
                 <h1 class="text-4xl font-black mb-2">{{ spotName }}</h1>
                 <p class="text-gray-600">New Jersey</p>
+                <p v-if="forecast?.buoyId" class="text-xs text-gray-500 mt-1">
+                  Buoy: {{ forecast.buoyId }}
+                </p>
               </div>
               <div class="text-right">
-                <div class="text-3xl font-black">{{ currentConditions.rating }}/5</div>
+                <div class="text-3xl font-black">{{ displayRating }}/5</div>
                 <div class="text-sm text-gray-600">Current Rating</div>
               </div>
             </div>
             
-            <!-- Current Conditions -->
+            <!-- Current Conditions - REAL DATA -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
               <div>
                 <div class="text-sm text-gray-600">Wave Height</div>
-                <div class="text-2xl font-bold">{{ currentConditions.waveHeight }}</div>
+                <div class="text-2xl font-bold">{{ displayConditions.waveHeight }}</div>
               </div>
               <div>
                 <div class="text-sm text-gray-600">Period</div>
-                <div class="text-2xl font-bold">{{ currentConditions.period }}</div>
+                <div class="text-2xl font-bold">{{ displayConditions.period }}</div>
               </div>
               <div>
                 <div class="text-sm text-gray-600">Wind</div>
-                <div class="text-2xl font-bold">{{ currentConditions.wind }}</div>
+                <div class="text-2xl font-bold">{{ displayConditions.wind }}</div>
               </div>
               <div>
-                <div class="text-sm text-gray-600">Tide</div>
-                <div class="text-2xl font-bold">{{ currentConditions.tide }}</div>
+                <div class="text-sm text-gray-600">Water Temp</div>
+                <div class="text-2xl font-bold">{{ displayConditions.waterTemp }}</div>
               </div>
+            </div>
+
+            <!-- Last Updated -->
+            <div class="mt-4 text-xs text-gray-500">
+              Last updated: {{ displayConditions.timestamp }}
             </div>
 
             <div class="mt-6 flex gap-3">
@@ -112,79 +152,13 @@
           <!-- 5-Day Forecast -->
           <div class="bg-white border-3 border-black rounded-lg p-6">
             <h2 class="text-2xl font-black mb-4">5-Day Forecast</h2>
+            <p class="text-sm text-gray-600 mb-4">
+              Coming soon - Multi-day forecasts
+            </p>
             
-            <!-- Desktop Table -->
-            <div class="hidden md:block overflow-x-auto">
-              <table class="w-full">
-                <thead>
-                  <tr class="border-b-2 border-black">
-                    <th class="text-left py-3 font-black">Day</th>
-                    <th class="text-left py-3 font-black">Waves</th>
-                    <th class="text-left py-3 font-black">Period</th>
-                    <th class="text-left py-3 font-black">Wind</th>
-                    <th class="text-left py-3 font-black">Rating</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr 
-                    v-for="day in forecast" 
-                    :key="day.date"
-                    class="border-b border-gray-200"
-                  >
-                    <td class="py-4">
-                      <div class="font-bold">{{ day.day }}</div>
-                      <div class="text-sm text-gray-600">{{ day.date }}</div>
-                    </td>
-                    <td class="py-4 font-bold">{{ day.waves }}</td>
-                    <td class="py-4">{{ day.period }}</td>
-                    <td class="py-4">{{ day.wind }}</td>
-                    <td class="py-4">
-                      <span 
-                        :class="getRatingColor(day.rating)"
-                        class="px-3 py-1 rounded-full font-bold text-sm"
-                      >
-                        {{ day.rating }}/5
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Mobile Cards -->
-            <div class="md:hidden space-y-4">
-              <div 
-                v-for="day in forecast" 
-                :key="day.date"
-                class="border-2 border-black rounded-lg p-4"
-              >
-                <div class="flex items-center justify-between mb-3">
-                  <div>
-                    <div class="font-bold">{{ day.day }}</div>
-                    <div class="text-sm text-gray-600">{{ day.date }}</div>
-                  </div>
-                  <span 
-                    :class="getRatingColor(day.rating)"
-                    class="px-3 py-1 rounded-full font-bold text-sm"
-                  >
-                    {{ day.rating }}/5
-                  </span>
-                </div>
-                <div class="grid grid-cols-3 gap-3 text-sm">
-                  <div>
-                    <div class="text-gray-600">Waves</div>
-                    <div class="font-bold">{{ day.waves }}</div>
-                  </div>
-                  <div>
-                    <div class="text-gray-600">Period</div>
-                    <div class="font-bold">{{ day.period }}</div>
-                  </div>
-                  <div>
-                    <div class="text-gray-600">Wind</div>
-                    <div class="font-bold">{{ day.wind }}</div>
-                  </div>
-                </div>
-              </div>
+            <!-- Placeholder for now -->
+            <div class="p-8 bg-gray-50 rounded-lg text-center text-gray-500">
+              Multi-day forecast integration in progress
             </div>
           </div>
         </div>
@@ -266,28 +240,45 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 definePageMeta({
   auth: false
 })
-// NO AUTHENTICATION - Removed definePageMeta
+
 const route = useRoute()
-const spotName = route.params.spot 
-  ? route.params.spot.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-  : 'Manasquan'
+const spotSlug = route.params.spot || 'manasquan'
+const spotName = spotSlug
+  .split('-')
+  .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+  .join(' ')
 
 const isFavorite = ref(false)
 const showReportModal = ref(false)
 
-const currentConditions = {
-  rating: 4.2,
-  waveHeight: '3-4ft',
-  period: '8s',
-  wind: '5mph W',
-  tide: 'Rising'
-}
+// Use the forecast composable to fetch REAL data
+const { useSpotForecast } = useForecast()
+const { forecast, loading, error, refresh } = useSpotForecast(spotSlug)
 
+// Computed properties for display
+const displayRating = computed(() => {
+  return forecast.value?.currentConditions?.rating || 'N/A'
+})
+
+const displayConditions = computed(() => {
+  if (!forecast.value?.currentConditions) {
+    return {
+      waveHeight: 'Loading...',
+      period: 'Loading...',
+      wind: 'Loading...',
+      waterTemp: 'Loading...',
+      timestamp: ''
+    }
+  }
+  return forecast.value.currentConditions
+})
+
+// Mock live reports (TODO: Replace with real user-generated reports)
 const liveReports = [
   {
     id: 1,
@@ -315,29 +306,15 @@ const liveReports = [
   }
 ]
 
-const forecast = [
-  { day: 'Today', date: 'Nov 18', waves: '3-4ft', period: '8s', wind: '5mph W', rating: 4 },
-  { day: 'Tomorrow', date: 'Nov 19', waves: '2-3ft', period: '7s', wind: '10mph SW', rating: 3 },
-  { day: 'Wednesday', date: 'Nov 20', waves: '4-5ft', period: '9s', wind: '8mph NW', rating: 5 },
-  { day: 'Thursday', date: 'Nov 21', waves: '5-6ft', period: '10s', wind: '12mph W', rating: 4 },
-  { day: 'Friday', date: 'Nov 22', waves: '3-4ft', period: '8s', wind: '15mph SW', rating: 3 }
-]
-
 const nearbySpots = [
   { name: 'Belmar', slug: 'belmar', distance: '3 miles north' },
   { name: 'Spring Lake', slug: 'spring-lake', distance: '5 miles north' },
   { name: 'Point Pleasant', slug: 'point-pleasant', distance: '4 miles south' }
 ]
 
-const getRatingColor = (rating) => {
-  if (rating >= 4) return 'bg-green-200 text-green-800'
-  if (rating >= 3) return 'bg-yellow-200 text-yellow-800'
-  return 'bg-gray-200 text-gray-800'
-}
-
 const handleReportSubmit = (report) => {
   console.log('Report submitted:', report)
   showReportModal.value = false
-  // TODO: Submit to API
+  // TODO: Submit to Supabase
 }
 </script>

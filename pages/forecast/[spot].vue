@@ -115,7 +115,7 @@
 
           <!-- Live Reports -->
           <div class="bg-white border-3 border-black rounded-lg p-6">
-            <h2 class="text-2xl font-black mb-4">Live Reports</h2>
+            <h2 class="text-2xl font-black mb-4">Live Reports (Demo)</h2>
             <div class="space-y-4">
               <div 
                 v-for="report in liveReports" 

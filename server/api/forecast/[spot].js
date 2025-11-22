@@ -2,6 +2,65 @@
 
 import { fetchBuoyData, formatBuoyData, getBuoyIdForSpot } from '~/server/utils/noaa-fetcher'
 
+// 🔥 IN-MEMORY CACHE
+// Cache buoy data for 30 minutes since NOAA only updates hourly
+const cache = new Map()
+const CACHE_TTL = 30 * 60 * 1000 // 30 minutes in milliseconds
+
+/**
+ * Get cached buoy data or fetch fresh if expired
+ */
+const getCachedBuoyData = async (buoyId) => {
+  const cacheKey = `buoy-${buoyId}`
+  const now = Date.now()
+  
+  // Check if we have valid cached data
+  const cached = cache.get(cacheKey)
+  if (cached && (now - cached.timestamp) < CACHE_TTL) {
+    console.log(`✅ Cache HIT for buoy ${buoyId} (age: ${Math.round((now - cached.timestamp) / 1000)}s)`)
+    return {
+      ...cached.data,
+      fromCache: true,
+      cacheAge: now - cached.timestamp
+    }
+  }
+  
+  // Cache miss or expired - fetch fresh data
+  console.log(`🌊 Cache MISS for buoy ${buoyId} - fetching from NOAA`)
+  const freshData = await fetchBuoyData(buoyId)
+  
+  // Store in cache
+  cache.set(cacheKey, {
+    data: freshData,
+    timestamp: now
+  })
+  
+  return {
+    ...freshData,
+    fromCache: false,
+    cacheAge: 0
+  }
+}
+
+/**
+ * Clear old cache entries (housekeeping)
+ * Run this periodically to prevent memory bloat
+ */
+const cleanupCache = () => {
+  const now = Date.now()
+  const maxAge = CACHE_TTL * 2 // Keep entries for 2x TTL
+  
+  for (const [key, value] of cache.entries()) {
+    if (now - value.timestamp > maxAge) {
+      cache.delete(key)
+      console.log(`🧹 Cleaned up expired cache entry: ${key}`)
+    }
+  }
+}
+
+// Run cleanup every 10 minutes
+setInterval(cleanupCache, 10 * 60 * 1000)
+
 export default defineEventHandler(async (event) => {
   const spot = getRouterParam(event, 'spot')
   
@@ -16,8 +75,8 @@ export default defineEventHandler(async (event) => {
     // Get the appropriate buoy for this spot
     const buoyId = getBuoyIdForSpot(spot)
     
-    // Fetch real buoy data
-    const rawBuoyData = await fetchBuoyData(buoyId)
+    // Fetch from cache or NOAA
+    const rawBuoyData = await getCachedBuoyData(buoyId)
     
     if (!rawBuoyData.success) {
       throw new Error(rawBuoyData.error)
@@ -26,7 +85,7 @@ export default defineEventHandler(async (event) => {
     // Format the data for frontend consumption
     const formattedData = formatBuoyData(rawBuoyData)
     
-    // Calculate a simple surf rating (you can make this more sophisticated)
+    // Calculate a simple surf rating
     const rating = calculateSurfRating(formattedData)
     
     return {
@@ -43,7 +102,13 @@ export default defineEventHandler(async (event) => {
         timestamp: formattedData.timestamp
       },
       rawData: formattedData,
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
+      // 🔥 Cache metadata for debugging
+      cache: {
+        fromCache: rawBuoyData.fromCache,
+        ageSeconds: Math.round(rawBuoyData.cacheAge / 1000),
+        ttlSeconds: Math.round(CACHE_TTL / 1000)
+      }
     }
     
   } catch (error) {

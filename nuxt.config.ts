@@ -5,6 +5,13 @@ export default defineNuxtConfig({
         '@nuxtjs/supabase',
 
   ],
+
+ supabase: {
+    redirect: false
+  },
+
+
+
   //css: ['~/assets/css/main.css'],
   googleFonts: {
     families: {

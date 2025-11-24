@@ -21,6 +21,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import {
   Chart,
+  LineController,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -31,6 +32,7 @@ import {
 } from 'chart.js'
 
 Chart.register(
+  LineController,
   CategoryScale, 
   LinearScale, 
   PointElement, 

@@ -1,13 +1,34 @@
 <template>
-  <div class="min-h-screen flex flex-col">
+  <div class="min-h-screen flex flex-col bg-gray-50">
     <AppHeader />
     
     <main class="flex-grow container mx-auto px-4 py-8">
-      <h1 class="text-3xl font-bold mb-6 capitalize">{{ spotName }} Forecast</h1>
-      
-      <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-        <div class="h-96 w-full relative">
-          <canvas ref="chartCanvas"></canvas>
+      <!-- Spot Header -->
+      <SpotHeader :spot-name="spotName" />
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Content (Left Column) -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Live Reports -->
+          <LiveReports />
+
+          <!-- Forecast Chart -->
+          <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+            <h3 class="font-bold text-xl mb-6">5-Day Forecast</h3>
+            <div class="h-80 w-full relative">
+              <canvas ref="chartCanvas"></canvas>
+            </div>
+            <div class="mt-4 text-center text-sm text-gray-500">
+              Multi-day forecast integration in progress
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar (Right Column) -->
+        <div class="space-y-6">
+          <SpotInfo />
+          <Hazards />
+          <NearbySpots />
         </div>
       </div>
     </main>

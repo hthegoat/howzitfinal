@@ -59,9 +59,9 @@
       <div class="grid lg:grid-cols-3 gap-6">
         <!-- Main Content -->
         <div class="lg:col-span-2 space-y-6">
-          <!-- Spot Header with REAL DATA -->
+          <!-- Spot Header with STAR RATING -->
           <div class="bg-white border-3 border-black rounded-lg p-6">
-            <div class="flex items-start justify-between mb-4">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between mb-4 gap-4">
               <div>
                 <h1 class="text-4xl font-black mb-2">{{ spotName }}</h1>
                 <p class="text-gray-600">New Jersey</p>
@@ -69,9 +69,12 @@
                   Buoy: {{ forecast.buoyId }}
                 </p>
               </div>
-              <div class="text-right">
-                <div class="text-3xl font-black">{{ displayRating }}/5</div>
-                <div class="text-sm text-gray-600">Current Rating</div>
+              <div class="flex flex-col items-start md:items-end">
+                <div class="text-sm text-gray-600 mb-2">Current Rating</div>
+                <StarRating 
+                  :rating="numericRating" 
+                  :show-label="true"
+                />
               </div>
             </div>
             
@@ -149,16 +152,52 @@
             </div>
           </div>
 
-          <!-- 5-Day Forecast -->
+          <!-- 5-Day Forecast - READY TO BUILD -->
           <div class="bg-white border-3 border-black rounded-lg p-6">
-            <h2 class="text-2xl font-black mb-4">5-Day Forecast</h2>
-            <p class="text-sm text-gray-600 mb-4">
-              Coming soon - Multi-day forecasts
-            </p>
+            <h2 class="text-2xl font-black mb-4">This Week</h2>
             
-            <!-- Placeholder for now -->
-            <div class="p-8 bg-gray-50 rounded-lg text-center text-gray-500">
-              Multi-day forecast integration in progress
+            <!-- Coming soon placeholder -->
+            <div class="space-y-4">
+              <!-- Best Session Hero Card - Placeholder -->
+              <div class="bg-gradient-to-r from-green-50 to-green-100 border-3 border-black rounded-lg p-6">
+                <div class="flex items-start justify-between mb-3">
+                  <div>
+                    <div class="text-sm font-bold text-green-800 mb-1">🔥 BEST SESSION</div>
+                    <div class="text-xl font-black">Wednesday 9AM - 12PM</div>
+                  </div>
+                  <StarRating :rating="4.8" :show-label="false" />
+                </div>
+                <div class="text-lg font-bold text-gray-700">
+                  4-5ft @ 10s • 3mph W • Clean + Glassy
+                </div>
+              </div>
+
+              <!-- Rest of week - Placeholder -->
+              <div class="space-y-2">
+                <div class="text-sm font-bold text-gray-600 mb-3">REST OF WEEK</div>
+                
+                <div 
+                  v-for="day in mockForecast" 
+                  :key="day.day"
+                  class="flex items-center justify-between p-3 border-2 border-gray-200 rounded-lg hover:bg-gray-50"
+                >
+                  <div class="flex items-center gap-4">
+                    <div class="w-16">
+                      <div class="font-bold">{{ day.day }}</div>
+                      <div class="text-xs text-gray-600">{{ day.date }}</div>
+                    </div>
+                    <StarRating :rating="day.rating" :show-label="false" />
+                  </div>
+                  <div class="text-right">
+                    <div class="font-bold">{{ day.waves }} @ {{ day.period }}</div>
+                    <div class="text-sm text-gray-600">{{ day.wind }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg text-sm text-blue-800">
+                📊 <strong>Coming soon:</strong> Real 5-day forecast data from NOAA
+              </div>
             </div>
           </div>
         </div>
@@ -265,6 +304,11 @@ const displayRating = computed(() => {
   return forecast.value?.currentConditions?.rating || 'N/A'
 })
 
+const numericRating = computed(() => {
+  const rating = forecast.value?.currentConditions?.rating
+  return typeof rating === 'number' ? rating : null
+})
+
 const displayConditions = computed(() => {
   if (!forecast.value?.currentConditions) {
     return {
@@ -278,7 +322,15 @@ const displayConditions = computed(() => {
   return forecast.value.currentConditions
 })
 
-// Mock live reports (TODO: Replace with real user-generated reports)
+// Mock 5-day forecast data (TODO: Replace with real API)
+const mockForecast = [
+  { day: 'Mon', date: 'Nov 25', rating: 2.8, waves: '2-3ft', period: '8s', wind: '8mph W' },
+  { day: 'Tue', date: 'Nov 26', rating: 3.5, waves: '3-4ft', period: '9s', wind: '5mph NW' },
+  { day: 'Thu', date: 'Nov 28', rating: 3.8, waves: '3-4ft', period: '8s', wind: '12mph SW' },
+  { day: 'Fri', date: 'Nov 29', rating: 3.2, waves: '2-3ft', period: '7s', wind: '15mph S' }
+]
+
+// Mock live reports
 const liveReports = [
   {
     id: 1,
@@ -315,6 +367,5 @@ const nearbySpots = [
 const handleReportSubmit = (report) => {
   console.log('Report submitted:', report)
   showReportModal.value = false
-  // TODO: Submit to Supabase
 }
 </script>

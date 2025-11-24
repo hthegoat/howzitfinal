@@ -45,6 +45,16 @@ export const fetchBuoyData = async (buoyId) => {
 }
 
 /**
+ * Parse a value that might be "MM" (missing measurement)
+ * NOAA uses "MM" to indicate missing data
+ */
+const parseValue = (value) => {
+  if (!value || value === 'MM') return null
+  const parsed = parseFloat(value)
+  return isNaN(parsed) ? null : parsed
+}
+
+/**
  * Parse a single line of NDBC buoy data
  * Format: YY MM DD hh mm WDIR WSPD GST WVHT DPD APD MWD PRES ATMP WTMP DEWP VIS TIDE
  */
@@ -60,23 +70,23 @@ const parseBuoyLine = (line) => {
     minute: parseInt(parts[4]),
     
     // Wind
-    windDirection: parseFloat(parts[5]) || null,  // degrees
-    windSpeed: parseFloat(parts[6]) || null,      // m/s
-    gustSpeed: parseFloat(parts[7]) || null,      // m/s
+    windDirection: parseValue(parts[5]),  // degrees
+    windSpeed: parseValue(parts[6]),      // m/s
+    gustSpeed: parseValue(parts[7]),      // m/s
     
     // Waves
-    waveHeight: parseFloat(parts[8]) || null,     // meters
-    dominantPeriod: parseFloat(parts[9]) || null, // seconds
-    averagePeriod: parseFloat(parts[10]) || null, // seconds
-    waveDirection: parseFloat(parts[11]) || null, // degrees
+    waveHeight: parseValue(parts[8]),     // meters
+    dominantPeriod: parseValue(parts[9]), // seconds
+    averagePeriod: parseValue(parts[10]), // seconds
+    waveDirection: parseValue(parts[11]), // degrees
     
     // Weather
-    pressure: parseFloat(parts[12]) || null,      // hPa
-    airTemp: parseFloat(parts[13]) || null,       // Celsius
-    waterTemp: parseFloat(parts[14]) || null,     // Celsius
-    dewPoint: parseFloat(parts[15]) || null,      // Celsius
-    visibility: parseFloat(parts[16]) || null,    // nautical miles
-    tide: parseFloat(parts[17]) || null           // feet
+    pressure: parseValue(parts[12]),      // hPa
+    airTemp: parseValue(parts[13]),       // Celsius
+    waterTemp: parseValue(parts[14]),     // Celsius
+    dewPoint: parseValue(parts[15]),      // Celsius
+    visibility: parseValue(parts[16]),    // nautical miles
+    tide: parseValue(parts[17])           // feet
   }
 }
 

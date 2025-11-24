@@ -13,6 +13,7 @@ import {
   Filler
 } from 'chart.js'
 
+// Register Chart.js components
 Chart.register(CategoryScale, LinearScale, PointElement, LineElement, Filler)
 
 const chartCanvas = ref(null)
@@ -23,10 +24,12 @@ onMounted(() => {
 
   const ctx = chartCanvas.value.getContext('2d')
   
+  // Generate tide curve data
   const hours = []
   const heights = []
   for (let i = 0; i <= 24; i++) {
     hours.push(i)
+    // Simulate semi-diurnal tide pattern
     const height = 2.5 + 2 * Math.sin((i / 6.2) * Math.PI)
     heights.push(Math.max(0, height))
   }

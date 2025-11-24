@@ -4,17 +4,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import {
-  Chart,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  LineController,
-  Filler
-} from 'chart.js'
-
-Chart.register(CategoryScale, LinearScale, PointElement, LineElement, LineController, Filler)
+import Chart from 'chart.js/auto'
 
 const chartCanvas = ref(null)
 let chartInstance = null

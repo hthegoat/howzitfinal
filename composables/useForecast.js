@@ -23,34 +23,20 @@ export const useForecast = () => {
     const error = useState(`forecast-error-${spotSlug}`, () => null)
 
     const refresh = async () => {
-      loading.value = true
-      error.value = null
+      onMounted(() => {
+        refresh()
+      })
 
-      try {
-        const data = await fetchSpotForecast(spotSlug)
-        forecast.value = data
-      } catch (err) {
-        error.value = err.message
-      } finally {
-        loading.value = false
+      return {
+        forecast: readonly(forecast),
+        loading: readonly(loading),
+        error: readonly(error),
+        refresh
       }
     }
 
-    // Auto-refresh on mount
-    onMounted(() => {
-      refresh()
-    })
-
     return {
-      forecast: readonly(forecast),
-      loading: readonly(loading),
-      error: readonly(error),
-      refresh
+      fetchSpotForecast,
+      useSpotForecast
     }
   }
-
-  return {
-    fetchSpotForecast,
-    useSpotForecast
-  }
-}

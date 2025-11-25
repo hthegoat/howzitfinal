@@ -3,34 +3,47 @@
     <AppHeader />
     
     <main class="flex-grow container mx-auto px-4 py-8">
-      <!-- Spot Header -->
-      <SpotHeader :spot-name="spotName" />
+      <!-- Loading State -->
+      <div v-if="loading" class="flex justify-center items-center h-64">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+      </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Main Content (Left Column) -->
-        <div class="lg:col-span-2 space-y-6">
-          <!-- Live Reports -->
-          <LiveReports />
+      <!-- Error State -->
+      <div v-else-if="error" class="text-center py-12">
+        <h2 class="text-2xl font-bold text-red-600 mb-2">Oops!</h2>
+        <p class="text-gray-600">{{ error }}</p>
+        <button @click="refresh" class="mt-4 px-4 py-2 bg-black text-white rounded">Try Again</button>
+      </div>
 
-          <!-- Forecast Chart -->
-          <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-            <h3 class="font-bold text-xl mb-6">5-Day Forecast</h3>
-            <div class="h-80 w-full relative">
-              <canvas ref="chartCanvas"></canvas>
-            </div>
-            <div class="mt-4 text-center text-sm text-gray-500">
-              Multi-day forecast integration in progress
+      <!-- Content -->
+      <template v-else-if="forecastData">
+        <SpotHeader :spot-name="forecastData.spot.name" :current="forecastData.forecast.current" />
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Main Content (Left Column) -->
+          <div class="lg:col-span-2 space-y-6">
+            <LiveReports />
+
+            <!-- Forecast Chart -->
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+              <h3 class="font-bold text-xl mb-6">5-Day Forecast</h3>
+              <div class="h-80 w-full relative">
+                <canvas ref="chartCanvas"></canvas>
+              </div>
+              <div class="mt-4 text-center text-sm text-gray-500">
+                Multi-day forecast integration in progress
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Sidebar (Right Column) -->
-        <div class="space-y-6">
-          <SpotInfo />
-          <Hazards />
-          <NearbySpots />
+          <!-- Sidebar (Right Column) -->
+          <div class="space-y-6">
+            <SpotInfo :spot="forecastData.spot" />
+            <Hazards :hazards="forecastData.spot.hazards" />
+            <NearbySpots />
+          </div>
         </div>
-      </div>
+      </template>
     </main>
 
     <AppFooter />
@@ -38,8 +51,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useForecast } from '~/composables/useForecast'
 import {
   Chart,
   LineController,
@@ -64,30 +78,30 @@ Chart.register(
 )
 
 const route = useRoute()
-const spotName = computed(() => route.params.spot?.replace(/-/g, ' ') || 'Surf')
+const spotSlug = route.params.spot
+
+const { useSpotForecast } = useForecast()
+const { forecast: forecastData, loading, error, refresh } = useSpotForecast(spotSlug)
 
 const chartCanvas = ref(null)
 let chartInstance = null
 
 // SEO
 useHead({
-  title: `${spotName.value} - Howzit Forecast`,
+  title: computed(() => forecastData.value ? `${forecastData.value.spot.name} - Howzit Forecast` : 'Loading...'),
   meta: [
-    { name: 'description', content: `Real-time surf forecast for ${spotName.value}` }
+    { name: 'description', content: computed(() => forecastData.value ? `Real-time surf forecast for ${forecastData.value.spot.name}` : 'Loading...') }
   ]
 })
 
-onMounted(() => {
-  if (!chartCanvas.value) return
+const initChart = () => {
+  if (!chartCanvas.value || !forecastData.value) return
 
   const ctx = chartCanvas.value.getContext('2d')
-  
-  const hours = []
-  const heights = []
-  for (let i = 0; i <= 24; i++) {
-    hours.push(i)
-    const height = 2.5 + 2 * Math.sin((i / 6.2) * Math.PI)
-    heights.push(Math.max(0, height))
+  const { hours, heights } = forecastData.value.forecast
+
+  if (chartInstance) {
+    chartInstance.destroy()
   }
 
   chartInstance = new Chart(ctx, {
@@ -147,7 +161,7 @@ onMounted(() => {
         y: {
           display: true,
           min: 0,
-          max: 6,
+          max: Math.max(...heights) + 2,
           grid: {
             color: '#f3f4f6',
             borderDash: [4, 4]
@@ -162,6 +176,20 @@ onMounted(() => {
       }
     }
   })
+}
+
+// Watch for data changes to init/update chart
+watch(forecastData, (newData) => {
+  if (newData) {
+    // Small delay to ensure canvas is rendered
+    setTimeout(initChart, 100)
+  }
+})
+
+onMounted(() => {
+  if (forecastData.value) {
+    initChart()
+  }
 })
 
 onUnmounted(() => {

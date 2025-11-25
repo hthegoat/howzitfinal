@@ -22,19 +22,19 @@
     <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
       <div>
         <p class="text-sm text-gray-500 mb-1">Wave Height</p>
-        <p class="text-3xl font-black">2-3<span class="text-lg font-normal text-gray-500 ml-1">ft</span></p>
+        <p class="text-3xl font-black">{{ current.height }}<span class="text-lg font-normal text-gray-500 ml-1">ft</span></p>
       </div>
       <div>
         <p class="text-sm text-gray-500 mb-1">Period</p>
-        <p class="text-3xl font-black">9<span class="text-lg font-normal text-gray-500 ml-1">s</span></p>
+        <p class="text-3xl font-black">{{ current.period }}<span class="text-lg font-normal text-gray-500 ml-1">s</span></p>
       </div>
       <div>
         <p class="text-sm text-gray-500 mb-1">Wind</p>
-        <p class="text-3xl font-black">11<span class="text-lg font-normal text-gray-500 ml-1">mph</span> <span class="text-lg font-bold">WNW</span></p>
+        <p class="text-3xl font-black">{{ current.wind.speed }}<span class="text-lg font-normal text-gray-500 ml-1">mph</span> <span class="text-lg font-bold">{{ current.wind.direction }}</span></p>
       </div>
       <div>
         <p class="text-sm text-gray-500 mb-1">Water Temp</p>
-        <p class="text-3xl font-black">54<span class="text-lg font-normal text-gray-500 ml-1">°F</span></p>
+        <p class="text-3xl font-black">{{ current.temp }}<span class="text-lg font-normal text-gray-500 ml-1">°F</span></p>
       </div>
     </div>
 
@@ -58,6 +58,10 @@
 defineProps({
   spotName: {
     type: String,
+    required: true
+  },
+  current: {
+    type: Object,
     required: true
   }
 })

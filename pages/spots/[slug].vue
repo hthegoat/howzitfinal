@@ -57,7 +57,7 @@
             </div>
             <div>
               <p class="text-gray-500">Coordinates</p>
-              <p class="font-medium">{{ spot.latitude.toFixed(4) }}, {{ spot.longitude.toFixed(4) }}</p>
+              <p class="font-medium">{{ Number(spot.latitude).toFixed(4) }}, {{ Number(spot.longitude).toFixed(4) }}</p>
             </div>
           </div>
         </div>

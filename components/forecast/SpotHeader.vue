@@ -4,17 +4,22 @@
     <nav class="text-sm text-gray-500 mb-4">
       <NuxtLink to="/" class="hover:text-black">Home</NuxtLink>
       <span class="mx-2">/</span>
+      <NuxtLink to="/spots" class="hover:text-black">Spots</NuxtLink>
+      <span class="mx-2">/</span>
       <span class="text-gray-900 font-medium">{{ spotName }}</span>
     </nav>
 
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
       <div>
         <h1 class="text-4xl font-black mb-1 capitalize">{{ spotName }}</h1>
-        <p class="text-gray-500">New Jersey • Buoy: 44065</p>
+        <p class="text-gray-500">{{ region }} • Buoy: {{ buoyId }}</p>
       </div>
-      <div class="mt-4 md:mt-0">
-        <span class="text-sm text-gray-500">Current Rating</span>
-        <!-- Placeholder for rating component if needed -->
+      <div class="mt-4 md:mt-0 text-right">
+        <span class="text-sm text-gray-500 block mb-1">Current Rating</span>
+        <div class="flex items-center gap-2 justify-end">
+          <Starrating :rating="rating" />
+          <span class="text-sm font-medium text-gray-700">{{ ratingLabel }}</span>
+        </div>
       </div>
     </div>
 
@@ -30,7 +35,11 @@
       </div>
       <div>
         <p class="text-sm text-gray-500 mb-1">Wind</p>
-        <p class="text-3xl font-black">{{ current.wind.speed }}<span class="text-lg font-normal text-gray-500 ml-1">mph</span> <span class="text-lg font-bold">{{ current.wind.direction }}</span></p>
+        <div class="flex items-center gap-2">
+          <p class="text-3xl font-black">{{ current.wind.speed }}<span class="text-lg font-normal text-gray-500 ml-1">mph</span></p>
+          <Windarrow :degrees="current.wind.degrees" :speed="Number(current.wind.speed)" />
+        </div>
+        <p class="text-sm text-gray-500">{{ current.wind.direction }}</p>
       </div>
       <div>
         <p class="text-sm text-gray-500 mb-1">Water Temp</p>
@@ -39,7 +48,7 @@
     </div>
 
     <div class="text-xs text-gray-400 mb-6">
-      Last updated: {{ new Date().toLocaleString() }}
+      Last updated: {{ formatTimestamp(timestamp) }}
     </div>
 
     <!-- Actions -->
@@ -55,14 +64,44 @@
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   spotName: {
     type: String,
     required: true
   },
+  region: {
+    type: String,
+    default: ''
+  },
+  buoyId: {
+    type: String,
+    default: ''
+  },
   current: {
     type: Object,
     required: true
+  },
+  rating: {
+    type: Number,
+    default: 0
+  },
+  ratingLabel: {
+    type: String,
+    default: 'Unknown'
+  },
+  timestamp: {
+    type: String,
+    default: null
   }
 })
+
+const formatTimestamp = (ts) => {
+  if (!ts) return 'N/A'
+  return new Date(ts).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  })
+}
 </script>

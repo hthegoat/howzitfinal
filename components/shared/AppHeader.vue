@@ -26,9 +26,9 @@
             >
               {{ link.name }}
             </a>
-            <button class="px-5 py-2 border-2 border-black font-bold hover:bg-black hover:text-white transition-all">
-              SIGN IN
-            </button>
+            <button class="bg-yellow-400 text-black font-bold px-5 py-2 hover:bg-yellow-300">
+  JOIN WAITLIST
+</button>
           </div>
 
           <!-- Mobile menu button -->

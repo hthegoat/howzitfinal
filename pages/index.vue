@@ -5,6 +5,7 @@
     <main>
       <HeroSection />
       <SocialProof />
+      <FoundingMember />
       <FeaturesSection />
       <HowItWorks />
       <Testimonials />

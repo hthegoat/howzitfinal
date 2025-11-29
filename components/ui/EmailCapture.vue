@@ -3,13 +3,14 @@
     <!-- Main Form -->
     <form 
       v-if="!submitted"
-      @submit.prevent="handleSubmit" 
       class="space-y-3"
+      action="https://formsubmit.co/howzitsurfing@gmail.com" method="POST"
     >
       <!-- Email Input Group -->
       <div class="flex flex-col sm:flex-row gap-0">
         <input
           v-model="email"
+          name="email"
           type="email"
           :placeholder="placeholder"
           required
@@ -24,30 +25,19 @@
           {{ loading ? loadingText : buttonText }}
         </button>
       </div>
-
-      <!-- Google Sign Up (optional) -->
-      <button
-        v-if="showGoogleSignup" 
-        type="button"
-        @click="$emit('google-signup')"
-        class="w-full px-5 py-3 border-2 border-black font-semibold flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors"
-      >
-        <GoogleIcon />
-        SIGN UP WITH GOOGLE
-      </button>
     </form>
 
     <!-- Success State -->
     <Transition name="fade">
       <div 
         v-if="submitted"
-        class="p-6 bg-green-50 border-2 border-green-500 rounded-lg"
+        class="p-6 bg-green-50 border-2 border-green-500"
       >
         <p class="font-bold text-green-900 mb-1">
-          🤙 You're in! Check your email to confirm.
+          🤙 You're on the list!
         </p>
         <p class="text-sm text-green-700">
-          We'll send you an invite as soon as we launch in your area.
+          We'll hit you up when we launch. Check your inbox for a confirmation.
         </p>
       </div>
     </Transition>
@@ -56,7 +46,7 @@
     <Transition name="fade">
       <div 
         v-if="error"
-        class="mt-3 p-3 bg-red-50 border-2 border-red-500 rounded-lg"
+        class="mt-3 p-3 bg-red-50 border-2 border-red-500"
       >
         <p class="text-sm text-red-700">{{ error }}</p>
       </div>
@@ -74,23 +64,19 @@ const props = defineProps({
   },
   buttonText: {
     type: String,
-    default: 'GET ACCESS'
+    default: 'JOIN WAITLIST'
   },
   loadingText: {
     type: String,
     default: 'JOINING...'
   },
-  showGoogleSignup: {
-    type: Boolean,
-    default: true
-  },
   context: {
     type: String,
-    default: 'hero' // hero, footer, popup
+    default: 'hero'
   }
 })
 
-const emit = defineEmits(['submit', 'google-signup'])
+const emit = defineEmits(['submit'])
 
 const email = ref('')
 const loading = ref(false)

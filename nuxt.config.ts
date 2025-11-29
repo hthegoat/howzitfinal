@@ -15,7 +15,7 @@ export default defineNuxtConfig({
     hostname: 'https://hwztsurf.com',
     gzip: true,
     sources: ['/api/__sitemap__/urls']
-  }
+  },
 
 
   //css: ['~/assets/css/main.css'],

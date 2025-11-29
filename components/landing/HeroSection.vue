@@ -24,7 +24,7 @@
     <!-- Email Capture -->
     <EmailCapture 
       @submit="handleEmailSubmit"
-      @google-signup="handleGoogleSignup"
+     
     />
 
     <!-- Trust Signals -->

@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50">
     <AppHeader />
     
-    <main class="max-w-6xl mx-auto px-4 py-8">
+    <main class="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
       <div v-if="!spot" class="text-gray-500">Loading...</div>
       
       <div v-else>
@@ -14,51 +14,112 @@
           :current="currentConditions"
           :rating="currentRating"
           :rating-label="ratingLabel"
-          :timestamp="buoyReading?.timestamp"
+          :timestamp="latestForecast?.fetched_at"
         />
 
         <!-- 5-Day Forecast -->
-        <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-100 mb-6">
-          <h3 class="font-bold text-xl mb-6">5-Day Forecast</h3>
+        <div class="bg-white rounded-lg p-3 sm:p-4 lg:p-6 shadow-sm border border-gray-100 mb-4 sm:mb-6">
+          <h3 class="font-bold text-base sm:text-lg lg:text-xl mb-3 sm:mb-4 lg:mb-6">5-Day Forecast</h3>
           
-          <div v-if="forecastLoading" class="text-gray-500 text-center py-8">
+          <div v-if="forecastLoading" class="text-gray-500 text-center py-6 sm:py-8">
             Loading forecast...
           </div>
           
-          <div v-else class="grid grid-cols-5 gap-2 md:gap-4">
+          <!-- Mobile: horizontal scroll, Tablet+: grid -->
+          <div class="hidden sm:grid sm:grid-cols-3 md:grid-cols-5 gap-2 lg:gap-4">
             <div 
               v-for="(day, index) in displayForecast" 
               :key="index"
-              class="text-center p-3 md:p-4 rounded-lg border border-gray-100"
-              :class="index === 0 ? 'bg-gray-50 border-black' : ''"
+              class="text-center p-3 lg:p-4 rounded-lg border border-gray-100 transition-colors"
+              :class="index === 0 ? 'bg-gray-50 border-2 border-black' : 'hover:bg-gray-50'"
             >
-              <p class="font-bold text-sm mb-2">{{ day.dayName }}</p>
-              <div class="flex justify-center mb-2">
-                <Starrating :rating="day.rating" />
+              <p class="font-bold text-xs sm:text-sm mb-1 sm:mb-2">{{ day.dayName }}</p>
+              <div class="flex justify-center mb-1 sm:mb-2">
+                <Starrating :rating="day.stars" />
               </div>
-              <p class="text-xl md:text-2xl font-black mb-1">{{ day.waveHeightFt }}</p>
-              <p class="text-xs text-gray-500 mb-3">{{ day.period }}s period</p>
+              <p class="text-lg sm:text-xl lg:text-2xl font-black mb-1">{{ day.waveDisplay }}</p>
+              <p class="text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3">{{ day.period }}s period</p>
               <div class="flex justify-center items-center gap-1 mb-1">
-                <Windarrow :degrees="day.windDir" :speed="day.windSpeed" />
-                <span class="text-xs text-gray-600">{{ day.windSpeed }}mph</span>
+                <Windarrow :degrees="day.windDir" :speed="day.windSpeed" class="w-3 h-3 sm:w-4 sm:h-4" />
+                <span class="text-[10px] sm:text-xs text-gray-600">{{ day.windSpeed }}mph</span>
               </div>
               <div class="flex justify-center items-center gap-1">
-                <Swellarrow :degrees="day.swellDir" />
-                <span class="text-xs text-gray-600">{{ formatDirection(day.swellDir) }}</span>
+                <Swellarrow :degrees="day.swellDir" class="w-3 h-3 sm:w-4 sm:h-4" />
+                <span class="text-[10px] sm:text-xs text-gray-600">{{ formatDirection(day.swellDir) }}</span>
               </div>
+            </div>
+          </div>
+
+          <!-- Mobile: horizontal scroll version -->
+          <div class="sm:hidden -mx-3 px-3">
+            <div class="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
+              <div 
+                v-for="(day, index) in displayForecast" 
+                :key="index"
+                class="flex-shrink-0 w-[calc(50%-4px)] snap-start text-center p-3 rounded-lg border border-gray-100"
+                :class="index === 0 ? 'bg-gray-50 border-2 border-black' : ''"
+              >
+                <p class="font-bold text-xs mb-1">{{ day.dayName }}</p>
+                <div class="flex justify-center mb-1 scale-90">
+                  <Starrating :rating="day.stars" />
+                </div>
+                <p class="text-lg font-black mb-0.5">{{ day.waveDisplay }}</p>
+                <p class="text-[10px] text-gray-500 mb-2">{{ day.period }}s period</p>
+                <div class="flex justify-center items-center gap-1 mb-1">
+                  <Windarrow :degrees="day.windDir" :speed="day.windSpeed" class="w-3 h-3" />
+                  <span class="text-[10px] text-gray-600">{{ day.windSpeed }}mph</span>
+                </div>
+                <div class="flex justify-center items-center gap-1">
+                  <Swellarrow :degrees="day.swellDir" class="w-3 h-3" />
+                  <span class="text-[10px] text-gray-600">{{ formatDirection(day.swellDir) }}</span>
+                </div>
+              </div>
+            </div>
+            <!-- Scroll indicator dots -->
+            <div class="flex justify-center gap-1.5 mt-2">
+              <div 
+                v-for="i in Math.ceil(displayForecast.length / 2)" 
+                :key="i"
+                class="w-1.5 h-1.5 rounded-full bg-gray-300"
+                :class="{ 'bg-gray-600': i === 1 }"
+              />
             </div>
           </div>
         </div>
 
         <!-- Two Column Layout -->
-        <div class="grid md:grid-cols-3 gap-6 mb-6">
+        <div class="grid lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
           <!-- Main Column -->
-          <div class="md:col-span-2 space-y-6">
+          <div class="lg:col-span-2 space-y-4 sm:space-y-6">
             <!-- Tide Chart -->
-            <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-              <h3 class="font-bold text-xl mb-4">Today's Tide</h3>
-              <div class="h-32">
-                <Tidechart />
+            <div class="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-100">
+              <h3 class="font-bold text-base sm:text-lg lg:text-xl mb-3 sm:mb-4">Today's Tide</h3>
+              
+              <!-- Chart Container - responsive height -->
+              <div class="relative h-36 sm:h-44 lg:h-48 mb-4 sm:mb-6 overflow-hidden">
+                <TideChart :tides="surflineTides" />
+              </div>
+              
+              <!-- Tide Times - 2 cols on mobile, 4 on tablet+ -->
+              <div v-if="todayTides.length > 0" class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+                <div 
+                  v-for="tide in todayTides" 
+                  :key="tide.id"
+                  class="text-center p-2 sm:p-3 rounded-lg"
+                  :class="tide.type === 'HIGH' ? 'bg-blue-50' : 'bg-gray-50'"
+                >
+                  <span 
+                    class="block font-bold text-xs sm:text-sm" 
+                    :class="tide.type === 'HIGH' ? 'text-blue-600' : 'text-gray-600'"
+                  >
+                    {{ tide.type }}
+                  </span>
+                  <span class="block text-base sm:text-lg font-black">{{ formatTideTime(tide.timestamp) }}</span>
+                  <span class="block text-xs sm:text-sm text-gray-500">{{ tide.height.toFixed(1) }}ft</span>
+                </div>
+              </div>
+              <div v-else class="text-gray-400 text-sm text-center py-4">
+                No tide data available
               </div>
             </div>
 
@@ -66,36 +127,48 @@
             <LiveReports />
           </div>
 
-          <!-- Sidebar -->
-          <div class="space-y-6">
-            <!-- Hazards (if any) -->
+          <!-- Sidebar - shows below main content on mobile/tablet -->
+          <div class="space-y-4 sm:space-y-6">
+            <!-- On mobile, show hazards first (most important) -->
             <Hazards :hazards="hazards" />
-
-            <!-- Spot Info -->
             <SpotInfo :spot="spotInfo" />
-
-            <!-- Nearby Spots -->
             <NearbySpots :spots="nearbySpots" :current-slug="spot.slug" />
           </div>
         </div>
       </div>
+
+<!-- After the two-column grid, before AppFooter -->
+<div class="mt-6">
+  <SpotHistory :spot="spot" />
+</div>
+
     </main>
+
+
     
     <AppFooter />
   </div>
 </template>
 
-<script setup>
-import { useMarineForecast } from '~/composables/useMarineForecast'
+<style scoped>
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+</style>
 
+<script setup>
 const route = useRoute()
 const supabase = useSupabaseClient()
-const { fetchForecast } = useMarineForecast()
 
 const spot = ref(null)
+const surflineForecasts = ref([])
+const surflineTides = ref([])
 const buoyReading = ref(null)
-const weather = ref(null)
-const marineForecast = ref([])
 const forecastLoading = ref(true)
 
 // Fetch spot data from Supabase
@@ -106,156 +179,217 @@ const { data } = await useAsyncData(`spot-${route.params.slug}`, async () => {
     .eq('slug', route.params.slug)
     .single()
   
-  if (!spotData) return null
-  
-  const { data: buoyData } = await supabase
-    .from('buoy_readings')
-    .select('*')
-    .eq('buoy_id', spotData.buoy_id)
-    .order('timestamp', { ascending: false })
-    .limit(1)
-    .single()
-  
-  const { data: weatherData } = await supabase
-    .from('weather_readings')
-    .select('*')
-    .eq('spot_id', spotData.id)
-    .order('timestamp', { ascending: false })
-    .limit(1)
-    .single()
-  
-  return { spot: spotData, buoy: buoyData, weather: weatherData }
+  return spotData
 })
 
-spot.value = data.value?.spot
-buoyReading.value = data.value?.buoy
-weather.value = data.value?.weather
+spot.value = data.value
 
-// Fetch marine forecast from Open-Meteo
+// Fetch Surfline forecasts and NOAA buoy data
 onMounted(async () => {
-  if (spot.value) {
+  if (spot.value?.id) {
     forecastLoading.value = true
-    const result = await fetchForecast(spot.value.latitude, spot.value.longitude)
-    if (result.success) {
-      marineForecast.value = result.data
+    
+    const now = new Date()
+    const sixDaysOut = new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000)
+
+    // Fetch forecasts
+    const { data: forecastData } = await supabase
+      .from('surfline_forecasts')
+      .select('*')
+      .eq('spot_id', spot.value.id)
+      .gte('timestamp', now.toISOString())
+      .lte('timestamp', sixDaysOut.toISOString())
+      .order('timestamp', { ascending: true })
+
+    surflineForecasts.value = forecastData || []
+
+    // Fetch tides
+    const twoDaysOut = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000)
+    
+    const { data: tideData } = await supabase
+      .from('surfline_tides')
+      .select('*')
+      .eq('spot_id', spot.value.id)
+      .gte('timestamp', now.toISOString())
+      .lte('timestamp', twoDaysOut.toISOString())
+      .order('timestamp', { ascending: true })
+
+    surflineTides.value = tideData || []
+
+    // Fetch water temp from NOAA buoy readings
+    if (spot.value.buoy_id) {
+      const { data: buoyData } = await supabase
+        .from('buoy_readings')
+        .select('*')
+        .eq('buoy_id', spot.value.buoy_id)
+        .order('timestamp', { ascending: false })
+        .limit(1)
+        .single()
+      
+      buoyReading.value = buoyData
     }
+    
     forecastLoading.value = false
   }
 })
 
-// Current conditions object for SpotHeader
+// Get latest forecast for current conditions
+const latestForecast = computed(() => {
+  return surflineForecasts.value[0] || null
+})
+
+// Current conditions from Surfline data + NOAA water temp
 const currentConditions = computed(() => {
-  const heightMeters = buoyReading.value?.wave_height || 0
-  const heightFeet = (heightMeters * 3.28084).toFixed(1)
-  const tempC = buoyReading.value?.water_temp
-  const tempF = tempC ? ((tempC * 9/5) + 32).toFixed(0) : '--'
-  const windMps = weather.value?.wind_speed || 0
-  const windMph = (windMps * 2.237).toFixed(0)
-  const windDeg = weather.value?.wind_direction || 0
-  const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
-  const windDir = dirs[Math.round(windDeg / 45) % 8]
-  
+  const f = latestForecast.value
+  if (!f) {
+    return {
+      height: '--',
+      period: '--',
+      wind: { speed: '--', direction: '--', degrees: 0 },
+      temp: '--',
+      swellDirection: 0
+    }
+  }
+
+  // Convert wind from knots to mph
+  const windMph = f.wind_speed ? Math.round(f.wind_speed * 1.151) : '--'
+  const windDir = f.wind_direction ? formatDirection(f.wind_direction) : '--'
+
+  // Get water temp from NOAA buoy (convert C to F)
+  const waterTempC = buoyReading.value?.water_temp
+  const waterTempF = waterTempC ? Math.round((waterTempC * 9/5) + 32) : '--'
+
   return {
-    height: heightFeet,
-    period: buoyReading.value?.wave_period || '--',
+    height: `${f.wave_min || 0}-${f.wave_max || 0}`,
+    period: f.swell_period ? Math.round(f.swell_period) : '--',
     wind: {
       speed: windMph,
       direction: windDir,
-      degrees: windDeg
+      degrees: f.wind_direction || 0,
+      type: f.wind_type || ''
     },
-    temp: tempF,
-    swellDirection: buoyReading.value?.swell_direction || 0
+    temp: waterTempF,
+    swellDirection: f.swell_direction || 0
   }
 })
 
-// Rating calculation
-const calculateRating = (heightFt, period, windMph) => {
-  let rating = 0
-  
-  // Wave height scoring (0-2 stars)
-  if (heightFt >= 2 && heightFt <= 6) rating += 2
-  else if (heightFt >= 1 && heightFt < 2) rating += 1
-  else if (heightFt > 6 && heightFt <= 8) rating += 1.5
-  
-  // Period scoring (0-2 stars)
-  if (period >= 10) rating += 2
-  else if (period >= 7) rating += 1
-  else if (period >= 5) rating += 0.5
-  
-  // Wind scoring (0-1 star)
-  if (windMph <= 8) rating += 1
-  else if (windMph <= 12) rating += 0.5
-  
-  return Math.round(Math.min(5, rating))
+// Convert Surfline rating to 0-5 stars
+const ratingToStars = (ratingKey, ratingValue) => {
+  // ratingValue is 0-6, convert to 0-5
+  if (ratingValue !== null && ratingValue !== undefined) {
+    return Math.round((ratingValue / 6) * 5)
+  }
+  // Fallback to key-based
+  const map = {
+    'VERY_POOR': 0,
+    'POOR': 1,
+    'POOR_TO_FAIR': 2,
+    'FAIR': 2,
+    'FAIR_TO_GOOD': 3,
+    'GOOD': 4,
+    'VERY_GOOD': 4,
+    'GOOD_TO_EPIC': 5,
+    'EPIC': 5
+  }
+  return map[ratingKey] || 1
 }
 
 const currentRating = computed(() => {
-  const height = parseFloat(currentConditions.value.height) || 0
-  const period = buoyReading.value?.wave_period || 0
-  const wind = parseFloat(currentConditions.value.wind.speed) || 0
-  return calculateRating(height, period, wind)
+  const f = latestForecast.value
+  if (!f) return 0
+  return ratingToStars(f.rating_key, f.rating_value)
 })
 
 const ratingLabel = computed(() => {
-  const labels = ['Flat', 'Poor', 'Fair', 'Good', 'Very Good', 'Epic']
-  return labels[currentRating.value] || 'Unknown'
+  const f = latestForecast.value
+  if (!f?.rating_key) return 'Unknown'
+  
+  const labels = {
+    'VERY_POOR': 'Very Poor',
+    'POOR': 'Poor',
+    'POOR_TO_FAIR': 'Poor-Fair',
+    'FAIR': 'Fair',
+    'FAIR_TO_GOOD': 'Fair-Good',
+    'GOOD': 'Good',
+    'VERY_GOOD': 'Very Good',
+    'GOOD_TO_EPIC': 'Epic',
+    'EPIC': 'Epic'
+  }
+  return labels[f.rating_key] || f.rating_key
 })
 
-// Transform marine forecast for display
+// Group forecasts by day for 5-day display
 const displayForecast = computed(() => {
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   const today = new Date()
   
-  // Use real data if available, otherwise fall back to mock
-  if (marineForecast.value.length > 0) {
-    return marineForecast.value.slice(0, 5).map((day, index) => {
-      const date = new Date(day.date)
-      const dayName = index === 0 ? 'Today' : days[date.getDay()]
-      const heightMeters = day.waveHeight || 0
-      const heightFeet = heightMeters * 3.28084
-      const period = day.wavePeriod || 0
-      
-      // Get wind data for this day (we'll use current wind as approximation for now)
-      const windMph = weather.value?.wind_speed ? weather.value.wind_speed * 2.237 : 8
-      
-      return {
-        dayName,
-        waveHeightFt: heightFeet.toFixed(1) + 'ft',
-        heightFeet: heightFeet, // raw number for rating calc
-        period: period.toFixed(0),
-        windSpeed: Math.round(windMph + (index * 2 - 4)), // slight variation
-        windDir: (weather.value?.wind_direction || 180) + (index * 15),
-        swellDir: day.swellDirection || day.waveDirection || 90,
-        rating: calculateRating(heightFeet, period, windMph)
-      }
-    })
-  }
-  
-  // Fallback mock data
-  const baseHeight = parseFloat(currentConditions.value.height) || 2
-  const basePeriod = buoyReading.value?.wave_period || 8
-  
-  return Array.from({ length: 5 }, (_, i) => {
-    const date = new Date(today)
-    date.setDate(date.getDate() + i)
-    const dayName = i === 0 ? 'Today' : days[date.getDay()]
-    const heightVar = Math.sin(i * 1.2) * 1.5
-    const height = Math.max(0.5, baseHeight + heightVar)
-    const period = Math.max(5, basePeriod + Math.sin(i) * 2)
-    const windSpd = Math.max(3, 8 + Math.sin(i * 2) * 6)
+  // Group by day
+  const byDay = {}
+  surflineForecasts.value.forEach(f => {
+    const date = new Date(f.timestamp).toDateString()
+    if (!byDay[date]) {
+      byDay[date] = []
+    }
+    byDay[date].push(f)
+  })
+
+  // Convert to array and compute daily summary
+  const dailyData = Object.entries(byDay).map(([dateStr, readings]) => {
+    const date = new Date(dateStr)
+    const isToday = date.toDateString() === today.toDateString()
     
+    // Get min/max waves for the day
+    const waveMin = Math.min(...readings.map(r => r.wave_min).filter(v => v !== null))
+    const waveMax = Math.max(...readings.map(r => r.wave_max).filter(v => v !== null))
+    
+    // Get best rating
+    const bestRating = readings.reduce((best, r) => {
+      if (!r.rating_value) return best
+      if (!best || r.rating_value > best.rating_value) return r
+      return best
+    }, null)
+
+    // Get swell from first reading with data
+    const swellReading = readings.find(r => r.swell_period)
+    
+    // Average wind
+    const winds = readings.filter(r => r.wind_speed !== null)
+    const avgWind = winds.length 
+      ? winds.reduce((sum, r) => sum + r.wind_speed, 0) / winds.length 
+      : null
+    const windReading = readings.find(r => r.wind_direction !== null)
+
     return {
-      dayName,
-      waveHeightFt: height.toFixed(1) + 'ft',
-      heightFeet: height,
-      period: period.toFixed(0),
-      windSpeed: Math.round(windSpd),
-      windDir: (180 + i * 30) % 360,
-      swellDir: 90 + i * 10,
-      rating: calculateRating(height, period, windSpd)
+      date,
+      dayName: isToday ? 'Today' : days[date.getDay()],
+      waveMin: isFinite(waveMin) ? waveMin : 0,
+      waveMax: isFinite(waveMax) ? waveMax : 0,
+      waveDisplay: formatWaveRange(waveMin, waveMax),
+      period: swellReading?.swell_period ? Math.round(swellReading.swell_period) : '--',
+      swellDir: swellReading?.swell_direction || 0,
+      windSpeed: avgWind ? Math.round(avgWind * 1.151) : '--', // knots to mph
+      windDir: windReading?.wind_direction || 0,
+      stars: ratingToStars(bestRating?.rating_key, bestRating?.rating_value)
     }
   })
+
+  // Sort by date and take first 5
+  return dailyData
+    .sort((a, b) => a.date - b.date)
+    .slice(0, 5)
 })
+
+// Format wave range for display
+const formatWaveRange = (min, max) => {
+  if (!isFinite(min) || !isFinite(max)) return '--'
+  // Round and ensure minimum of 1 (no "0ft" waves)
+  const minRound = Math.max(1, Math.round(min))
+  const maxRound = Math.max(1, Math.round(max))
+  if (minRound === maxRound) {
+    return `${minRound}ft`
+  }
+  return `${minRound}-${maxRound}ft`
+}
 
 // Format direction degrees to compass
 const formatDirection = (degrees) => {
@@ -264,7 +398,23 @@ const formatDirection = (degrees) => {
   return dirs[Math.round(degrees / 45) % 8]
 }
 
-// Spot info for SpotInfo component
+// Today's tides
+const todayTides = computed(() => {
+  const today = new Date().toDateString()
+  return surflineTides.value.filter(t => {
+    return new Date(t.timestamp).toDateString() === today
+  })
+})
+
+const formatTideTime = (timestamp) => {
+  return new Date(timestamp).toLocaleTimeString('en-US', { 
+    hour: 'numeric', 
+    minute: '2-digit',
+    hour12: true 
+  })
+}
+
+// Spot info
 const spotInfo = computed(() => ({
   skill_level: 'All levels',
   best_tide: 'Mid to High',
@@ -276,25 +426,59 @@ const spotInfo = computed(() => ({
 // Hazards based on conditions
 const hazards = computed(() => {
   const h = []
-  const wind = parseFloat(currentConditions.value.wind.speed) || 0
-  const height = parseFloat(currentConditions.value.height) || 0
+  const f = latestForecast.value
+  if (!f) return h
   
-  if (wind > 20) h.push('Strong winds - use caution')
-  else if (wind > 15) h.push('Moderate winds')
+  const windMph = f.wind_speed ? f.wind_speed * 1.151 : 0
   
-  if (height > 8) h.push('Large surf - experienced surfers only')
+  if (windMph > 20) h.push('Strong winds - use caution')
+  else if (windMph > 15) h.push('Moderate winds')
+  
+  if (f.wave_max > 8) h.push('Large surf - experienced surfers only')
   
   return h
 })
 
-// Nearby spots
-const nearbySpots = computed(() => [
-  { name: 'Belmar', slug: 'belmar', distance: '3 miles north' },
-  { name: 'Deal', slug: 'deal', distance: '5 miles north' },
-  { name: 'Manasquan', slug: 'manasquan-inlet', distance: '4 miles south' }
-])
+// Nearby spots - fetch from DB
+const nearbySpots = ref([])
+
+onMounted(async () => {
+  if (spot.value) {
+    const { data: allSpots } = await supabase
+      .from('spots')
+      .select('name, slug')
+      .neq('slug', spot.value.slug)
+      .limit(3)
+    
+    nearbySpots.value = (allSpots || []).map(s => ({
+      name: s.name,
+      slug: s.slug,
+      distance: 'Nearby'
+    }))
+  }
+})
 
 useHead({
   title: computed(() => spot.value ? `${spot.value.name} Surf Report - Howzit` : 'Loading...'),
 })
+
+// In your spot/[slug].vue or wherever this lives
+
+useSeoMeta({
+  title: () => `${spot.value?.name} Surf Forecast - Howzit`,
+  description: () => `${spot.value?.name} surf report and 5-day forecast. Current conditions, tide charts, and swell data for ${spot.value?.region}.`,
+  ogTitle: () => `${spot.value?.name} Surf Forecast`,
+  ogDescription: () => `Check the waves at ${spot.value?.name}. ${currentConditions.value?.waveHeight || ''} waves, ${currentConditions.value?.period || ''}s period.`,
+  ogType: 'website',
+  ogImage: '/og-image.png', // Create a branded share image
+  twitterCard: 'summary_large_image',
+})
+
+// Canonical URL
+useHead({
+  link: [
+    { rel: 'canonical', href: `https://howzit.surf/forecast/${spot.value?.slug}` }
+  ]
+})
+
 </script>

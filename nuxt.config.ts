@@ -2,14 +2,20 @@ export default defineNuxtConfig({
   modules: [
     '@nuxtjs/tailwindcss',
     '@nuxtjs/google-fonts',
-        '@nuxtjs/supabase',
+    '@nuxtjs/supabase',
+    '@nuxtjs/sitemap',
 
   ],
 
- supabase: {
+  supabase: {
     redirect: false
   },
-
+  // nuxt.config.ts
+  sitemap: {
+    hostname: 'https://hwztsurf.com',
+    gzip: true,
+    sources: ['/api/__sitemap__/urls']
+  }
 
 
   //css: ['~/assets/css/main.css'],

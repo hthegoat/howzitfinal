@@ -1,2 +1,5 @@
-User-Agent: *
-Disallow:
+// public/robots.txt
+User-agent: *
+Allow: /
+
+Sitemap: https://hwztsurf.com/sitemap.xml

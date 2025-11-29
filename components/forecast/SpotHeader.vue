@@ -9,22 +9,19 @@
       <span class="text-gray-900 font-medium">{{ spotName }}</span>
     </nav>
 
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-      <div>
-        <h1 class="text-4xl font-black mb-1 capitalize">{{ spotName }}</h1>
-        <p class="text-gray-500">{{ region }} • Buoy: {{ buoyId }}</p>
-      </div>
-      <div class="mt-4 md:mt-0 text-right">
-        <span class="text-sm text-gray-500 block mb-1">Current Rating</span>
-        <div class="flex items-center gap-2 justify-end">
-          <Starrating :rating="rating" />
-          <span class="text-sm font-medium text-gray-700">{{ ratingLabel }}</span>
-        </div>
+    <!-- Title + Rating on same line -->
+    <div class="flex flex-wrap items-center gap-3 mb-2">
+      <h1 class="text-4xl font-black capitalize">{{ spotName }}</h1>
+      <div class="flex items-center gap-2">
+        <Starrating :rating="rating" />
+        <span class="text-sm font-medium" :class="ratingColorClass">{{ ratingLabel }}</span>
       </div>
     </div>
+    
+    <p class="text-gray-500 mb-8">{{ region }} • Buoy: {{ buoyId }}</p>
 
     <!-- Metrics Grid -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-6">
       <div>
         <p class="text-sm text-gray-500 mb-1">Wave Height</p>
         <p class="text-3xl font-black">{{ current.height }}<span class="text-lg font-normal text-gray-500 ml-1">ft</span></p>
@@ -47,23 +44,15 @@
       </div>
     </div>
 
-    <div class="text-xs text-gray-400 mb-6">
+    <div class="text-xs text-gray-400">
       Last updated: {{ formatTimestamp(timestamp) }}
-    </div>
-
-    <!-- Actions -->
-    <div class="flex items-center gap-4">
-      <button class="flex-grow bg-black text-white font-bold py-3 px-6 rounded hover:bg-gray-800 transition-colors">
-        Post Report
-      </button>
-      <button class="text-gray-900 font-bold py-3 px-6 rounded border border-transparent hover:bg-gray-50 transition-colors">
-        Set Alert
-      </button>
     </div>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
+
 const props = defineProps({
   spotName: {
     type: String,
@@ -93,6 +82,15 @@ const props = defineProps({
     type: String,
     default: null
   }
+})
+
+// Color class for rating label
+const ratingColorClass = computed(() => {
+  if (props.rating >= 4) return 'text-emerald-600'
+  if (props.rating >= 3) return 'text-green-600'
+  if (props.rating >= 2) return 'text-yellow-600'
+  if (props.rating >= 1) return 'text-orange-500'
+  return 'text-gray-500'
 })
 
 const formatTimestamp = (ts) => {

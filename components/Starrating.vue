@@ -3,7 +3,7 @@
     <svg 
       v-for="i in max" 
       :key="i"
-      class="w-4 h-4" 
+      class="w-5 h-5" 
       viewBox="0 0 24 24" 
       :fill="i <= rating ? '#000' : '#e5e7eb'"
     >

@@ -90,7 +90,7 @@ const navLinks = [
   { name: 'Pricing', href: '#pricing' },
   { name: 'Reviews', href: '#reviews' },
   { name: 'FAQ', href: '#faq' },
-  { name: 'Blog', href: '/blog' }
+  { name: 'Spots', href: '/spots' }
 ]
 </script>
 

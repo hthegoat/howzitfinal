@@ -21,8 +21,15 @@ export default defineNuxtConfig({
   //css: ['~/assets/css/main.css'],
   googleFonts: {
     families: {
-      Inter: [400, 500, 600, 700, 800, 900]
-    }
+      // Display font - Condensed headlines
+      'Bebas Neue': true,
+      // Body font - Clean geometric
+      'DM Sans': [400, 500, 600, 700],
+      // Mono for data display
+      'JetBrains Mono': [400, 500, 600],
+    },
+    display: 'swap',
+    preload: true,
   },
   components: {
     dirs: [
@@ -30,7 +37,9 @@ export default defineNuxtConfig({
         path: '~/components',
         pathPrefix: false,
         extensions: ['vue']
-      }
+      },
+      { path: '~/components/marketing', prefix: '' },
+
     ]
   },
   app: {

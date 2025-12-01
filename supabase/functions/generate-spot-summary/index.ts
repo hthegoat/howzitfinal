@@ -129,21 +129,25 @@ const formatForecastData = (spot: any, forecasts: any[], tides: any[], waterTemp
     return output
 }
 
-// Call Claude API
 const generateSummary = async (forecastData: string): Promise<string> => {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': ANTHROPIC_API_KEY!,
-            'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-            model: 'claude-3-haiku-20240307',
-            max_tokens: 150,
-            messages: [{
-                role: 'user',
-                content: `You are a surf forecaster writing a brief, actionable summary for everyday surfers.
+    if (!ANTHROPIC_API_KEY) {
+        throw new Error('ANTHROPIC_API_KEY is not set')
+    }
+
+    try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': ANTHROPIC_API_KEY,
+                'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+                model: 'claude-3-haiku-20240307',
+                max_tokens: 150,
+                messages: [{
+                    role: 'user',
+                    content: `You are a surf forecaster writing a brief, actionable summary for everyday surfers.
 
 Given this forecast data:
 
@@ -156,103 +160,24 @@ Write a 2-3 sentence summary that:
 
 Be direct and conversational. No hype. If conditions are poor all week, say so honestly.
 
-Example tone: "Wednesday morning looks best — offshore winds until 10am with a rising tide. Small but clean, expect 1-2ft faces. Rest of the week is onshore mush."
-
 Summary:`
-            }]
-        })
-    })
-
-    const data = await response.json()
-    return data.content[0].text.trim()
-}
-
-serve(async (req) => {
-    try {
-        const { spot_id } = await req.json()
-
-        // Fetch spot
-        const { data: spot, error: spotError } = await supabase
-            .from('spots')
-            .select('*')
-            .eq('id', spot_id)
-            .single()
-
-        if (spotError || !spot) {
-            return new Response(JSON.stringify({ error: 'Spot not found' }), { status: 404 })
-        }
-
-        // Fetch forecasts (next 6 days)
-        const now = new Date()
-        const sixDaysOut = new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000)
-
-        const { data: forecasts } = await supabase
-            .from('surfline_forecasts')
-            .select('*')
-            .eq('spot_id', spot_id)
-            .gte('timestamp', now.toISOString())
-            .lte('timestamp', sixDaysOut.toISOString())
-            .order('timestamp', { ascending: true })
-
-        // Fetch tides (next 2 days)
-        const twoDaysOut = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000)
-
-        const { data: tides } = await supabase
-            .from('surfline_tides')
-            .select('*')
-            .eq('spot_id', spot_id)
-            .gte('timestamp', now.toISOString())
-            .lte('timestamp', twoDaysOut.toISOString())
-            .order('timestamp', { ascending: true })
-
-        // Fetch water temp from buoy
-        let waterTemp = null
-        if (spot.buoy_id) {
-            const { data: buoy } = await supabase
-                .from('buoy_readings')
-                .select('water_temp')
-                .eq('buoy_id', spot.buoy_id)
-                .order('timestamp', { ascending: false })
-                .limit(1)
-                .single()
-
-            if (buoy?.water_temp) {
-                waterTemp = Math.round((buoy.water_temp * 9 / 5) + 32) // C to F
-            }
-        }
-
-        // Format data and generate summary
-        const forecastData = formatForecastData(spot, forecasts || [], tides || [], waterTemp)
-        const summary = await generateSummary(forecastData)
-
-        // Save to database
-        const today = new Date().toISOString().split('T')[0]
-
-        const { error: upsertError } = await supabase
-            .from('spot_summaries')
-            .upsert({
-                spot_id: spot_id,
-                summary: summary,
-                forecast_date: today,
-                generated_at: new Date().toISOString()
-            }, {
-                onConflict: 'spot_id,forecast_date'
+                }]
             })
+        })
 
-        if (upsertError) {
-            console.error('Upsert error:', upsertError)
+        const responseText = await response.text()
+        console.log('Raw response:', responseText)
+
+        const data = JSON.parse(responseText)
+
+        if (!response.ok) {
+            throw new Error(`API error ${response.status}: ${data.error?.message || responseText}`)
         }
 
-        return new Response(JSON.stringify({
-            spot: spot.name,
-            summary,
-            forecast_data: forecastData
-        }), {
-            headers: { 'Content-Type': 'application/json' }
-        })
+        return data.content[0].text.trim()
 
     } catch (error) {
-        console.error('Error:', error)
-        return new Response(JSON.stringify({ error: error.message }), { status: 500 })
+        console.error('generateSummary error:', error)
+        throw error
     }
-})
+}

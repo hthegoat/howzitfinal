@@ -16,76 +16,113 @@
           :rating-label="ratingLabel"
           :timestamp="latestForecast?.fetched_at"
         />
-
+<!-- AI Summary -->
+<div v-if="spotSummary" class="bg-yellow-50 border-2 border-black p-4 mb-6">
+  <p class="font-bold text-sm mb-2">📋 This Week's Outlook</p>
+  <p class="text-gray-800">{{ spotSummary.summary }}</p>
+  <p class="text-xs text-gray-400 mt-2">Updated {{ new Date(spotSummary.generated_at).toLocaleString() }}</p>
+</div>
         <!-- 5-Day Forecast -->
-        <div class="bg-white rounded-lg p-3 sm:p-4 lg:p-6 shadow-sm border border-gray-100 mb-4 sm:mb-6">
-          <h3 class="font-bold text-base sm:text-lg lg:text-xl mb-3 sm:mb-4 lg:mb-6">5-Day Forecast</h3>
-          
-          <div v-if="forecastLoading" class="text-gray-500 text-center py-6 sm:py-8">
-            Loading forecast...
-          </div>
-          
-          <!-- Mobile: horizontal scroll, Tablet+: grid -->
-          <div class="hidden sm:grid sm:grid-cols-3 md:grid-cols-5 gap-2 lg:gap-4">
-            <div 
-              v-for="(day, index) in displayForecast" 
-              :key="index"
-              class="text-center p-3 lg:p-4 rounded-lg border border-gray-100 transition-colors"
-              :class="index === 0 ? 'bg-gray-50 border-2 border-black' : 'hover:bg-gray-50'"
-            >
-              <p class="font-bold text-xs sm:text-sm mb-1 sm:mb-2">{{ day.dayName }}</p>
-              <div class="flex justify-center mb-1 sm:mb-2">
-                <Starrating :rating="day.stars" />
-              </div>
-              <p class="text-lg sm:text-xl lg:text-2xl font-black mb-1">{{ day.waveDisplay }}</p>
-              <p class="text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3">{{ day.period }}s period</p>
-              <div class="flex justify-center items-center gap-1 mb-1">
-                <Windarrow :degrees="day.windDir" :speed="day.windSpeed" class="w-3 h-3 sm:w-4 sm:h-4" />
-                <span class="text-[10px] sm:text-xs text-gray-600">{{ day.windSpeed }}mph</span>
-              </div>
-              <div class="flex justify-center items-center gap-1">
-                <Swellarrow :degrees="day.swellDir" class="w-3 h-3 sm:w-4 sm:h-4" />
-                <span class="text-[10px] sm:text-xs text-gray-600">{{ formatDirection(day.swellDir) }}</span>
-              </div>
-            </div>
-          </div>
+      <div class="bg-white rounded-lg p-3 sm:p-4 lg:p-6 shadow-sm border border-gray-100 mb-4 sm:mb-6">
+  <h3 class="font-bold text-base sm:text-lg lg:text-xl mb-3 sm:mb-4 lg:mb-6">5-Day Forecast</h3>
+  
+  <div v-if="forecastLoading" class="text-gray-500 text-center py-6 sm:py-8">
+    Loading forecast...
+  </div>
+  
+  <!-- Desktop/Tablet grid -->
+  <div class="hidden sm:grid sm:grid-cols-3 md:grid-cols-5 gap-2 lg:gap-4">
+    <div 
+      v-for="(day, index) in displayForecast" 
+      :key="index"
+      class="relative overflow-hidden text-center p-3 lg:p-4 rounded-lg border border-gray-100 transition-colors"
+      :class="index === 0 ? 'bg-gray-50 border-2 border-black' : 'hover:bg-gray-50'"
+    >
+      <!-- Color bar -->
+      <div 
+        :style="{ backgroundColor: getStarsColor(day.stars) }"
+        class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-lg"
+      ></div>
 
-          <!-- Mobile: horizontal scroll version -->
-          <div class="sm:hidden -mx-3 px-3">
-            <div class="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
-              <div 
-                v-for="(day, index) in displayForecast" 
-                :key="index"
-                class="flex-shrink-0 w-[calc(50%-4px)] snap-start text-center p-3 rounded-lg border border-gray-100"
-                :class="index === 0 ? 'bg-gray-50 border-2 border-black' : ''"
-              >
-                <p class="font-bold text-xs mb-1">{{ day.dayName }}</p>
-                <div class="flex justify-center mb-1 scale-90">
-                  <Starrating :rating="day.stars" />
-                </div>
-                <p class="text-lg font-black mb-0.5">{{ day.waveDisplay }}</p>
-                <p class="text-[10px] text-gray-500 mb-2">{{ day.period }}s period</p>
-                <div class="flex justify-center items-center gap-1 mb-1">
-                  <Windarrow :degrees="day.windDir" :speed="day.windSpeed" class="w-3 h-3" />
-                  <span class="text-[10px] text-gray-600">{{ day.windSpeed }}mph</span>
-                </div>
-                <div class="flex justify-center items-center gap-1">
-                  <Swellarrow :degrees="day.swellDir" class="w-3 h-3" />
-                  <span class="text-[10px] text-gray-600">{{ formatDirection(day.swellDir) }}</span>
-                </div>
-              </div>
-            </div>
-            <!-- Scroll indicator dots -->
-            <div class="flex justify-center gap-1.5 mt-2">
-              <div 
-                v-for="i in Math.ceil(displayForecast.length / 2)" 
-                :key="i"
-                class="w-1.5 h-1.5 rounded-full bg-gray-300"
-                :class="{ 'bg-gray-600': i === 1 }"
-              />
-            </div>
-          </div>
+      <p class="font-bold text-xs sm:text-sm mb-1 sm:mb-2">{{ day.dayName }}</p>
+      <div class="flex justify-center mb-1 sm:mb-2">
+        <Starrating :rating="day.stars" />
+      </div>
+      <p class="text-lg sm:text-xl lg:text-2xl font-black mb-1">{{ day.waveDisplay }}</p>
+      <p class="text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3">{{ day.period }}s period</p>
+      
+      <!-- Wind with quality -->
+      <div class="flex justify-center items-center gap-1 mb-1">
+        <span 
+          :style="{ backgroundColor: getWindQualityColor(day.windQuality) }"
+          class="w-1.5 h-1.5 rounded-full"
+        ></span>
+        <span class="text-[10px] sm:text-xs text-gray-600">{{ day.windSpeed }}mph {{ day.windQuality }}</span>
+      </div>
+      
+      <!-- Swell with quality -->
+      <div class="flex justify-center items-center gap-1">
+        <span 
+          :style="{ backgroundColor: getSwellQualityColor(day.swellQuality) }"
+          class="w-1.5 h-1.5 rounded-full"
+        ></span>
+        <span class="text-[10px] sm:text-xs text-gray-600">{{ formatDirection(day.swellDir) }} {{ day.swellQuality }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile scroll -->
+  <div class="sm:hidden -mx-3 px-3">
+    <div class="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
+      <div 
+        v-for="(day, index) in displayForecast" 
+        :key="index"
+        class="relative overflow-hidden flex-shrink-0 w-[calc(50%-4px)] snap-start text-center p-3 rounded-lg border border-gray-100"
+        :class="index === 0 ? 'bg-gray-50 border-2 border-black' : ''"
+      >
+        <!-- Color bar -->
+        <div 
+          :style="{ backgroundColor: getStarsColor(day.stars) }"
+          class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-lg"
+        ></div>
+
+        <p class="font-bold text-xs mb-1">{{ day.dayName }}</p>
+        <div class="flex justify-center mb-1 scale-90">
+          <Starrating :rating="day.stars" />
         </div>
+        <p class="text-lg font-black mb-0.5">{{ day.waveDisplay }}</p>
+        <p class="text-[10px] text-gray-500 mb-2">{{ day.period }}s period</p>
+        
+        <!-- Wind with quality -->
+        <div class="flex justify-center items-center gap-1 mb-1">
+          <span 
+            :style="{ backgroundColor: getWindQualityColor(day.windQuality) }"
+            class="w-1.5 h-1.5 rounded-full"
+          ></span>
+          <span class="text-[10px] text-gray-600">{{ day.windSpeed }}mph {{ day.windQuality }}</span>
+        </div>
+        
+        <!-- Swell with quality -->
+        <div class="flex justify-center items-center gap-1">
+          <span 
+            :style="{ backgroundColor: getSwellQualityColor(day.swellQuality) }"
+            class="w-1.5 h-1.5 rounded-full"
+          ></span>
+          <span class="text-[10px] text-gray-600">{{ formatDirection(day.swellDir) }} {{ day.swellQuality }}</span>
+        </div>
+      </div>
+    </div>
+    <!-- Scroll indicator dots -->
+    <div class="flex justify-center gap-1.5 mt-2">
+      <div 
+        v-for="i in Math.ceil(displayForecast.length / 2)" 
+        :key="i"
+        class="w-1.5 h-1.5 rounded-full bg-gray-300"
+        :class="{ 'bg-gray-600': i === 1 }"
+      />
+    </div>
+  </div>
+</div>
 
         <!-- Two Column Layout -->
         <div class="grid lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
@@ -184,6 +221,86 @@ const { data } = await useAsyncData(`spot-${route.params.slug}`, async () => {
 
 spot.value = data.value
 
+// Rating color based on stars (0-5)
+const getStarsColor = (stars) => {
+  if (stars >= 4) return '#22c55e'
+  if (stars >= 3) return '#a3e635'
+  if (stars >= 2) return '#facc15'
+  if (stars >= 1) return '#fb923c'
+  return '#ef4444'
+}
+
+// Wind quality based on beach orientation
+const getWindQuality = (windDirection, beachOrientation) => {
+  if (!windDirection || !beachOrientation) return 'unknown'
+  
+  let diff = Math.abs(windDirection - beachOrientation)
+  if (diff > 180) diff = 360 - diff
+  
+  if (diff >= 150) return 'offshore'
+  if (diff >= 120) return 'cross-off'
+  if (diff >= 60) return 'cross-shore'
+  if (diff >= 30) return 'cross-on'
+  return 'onshore'
+}
+
+// Swell quality based on beach orientation
+const getSwellQuality = (swellDirection, beachOrientation) => {
+  if (!swellDirection || !beachOrientation) return 'unknown'
+  
+  let diff = Math.abs(swellDirection - beachOrientation)
+  if (diff > 180) diff = 360 - diff
+  
+  if (diff <= 30) return 'ideal'
+  if (diff <= 60) return 'good'
+  if (diff <= 90) return 'fair'
+  return 'poor'
+}
+
+// Colors for wind quality
+const getWindQualityColor = (quality) => {
+  const colors = {
+    'offshore': '#22c55e',
+    'cross-off': '#a3e635',
+    'cross-shore': '#facc15',
+    'cross-on': '#fb923c',
+    'onshore': '#ef4444',
+    'unknown': '#d1d5db'
+  }
+  return colors[quality] || '#d1d5db'
+}
+
+
+// Fetch the pre-generated summary
+const spotSummary = ref(null)
+
+onMounted(async () => {
+  if (spot.value?.id) {
+    const today = new Date().toISOString().split('T')[0]
+    
+    const { data: summary } = await supabase
+      .from('spot_summaries')
+      .select('summary, generated_at')
+      .eq('spot_id', spot.value.id)
+      .eq('forecast_date', today)
+      .single()
+    
+    spotSummary.value = summary
+  }
+})
+
+
+// Colors for swell quality
+const getSwellQualityColor = (quality) => {
+  const colors = {
+    'ideal': '#22c55e',
+    'good': '#a3e635',
+    'fair': '#facc15',
+    'poor': '#ef4444',
+    'unknown': '#d1d5db'
+  }
+  return colors[quality] || '#d1d5db'
+}
 // Fetch Surfline forecasts and NOAA buoy data
 onMounted(async () => {
   if (spot.value?.id) {
@@ -250,6 +367,58 @@ const currentConditions = computed(() => {
       swellDirection: 0
     }
   }
+
+  // Wind quality based on beach orientation
+const getWindQuality = (windDirection, beachOrientation) => {
+  if (!windDirection || !beachOrientation) return 'unknown'
+  
+  let diff = Math.abs(windDirection - beachOrientation)
+  if (diff > 180) diff = 360 - diff
+  
+  if (diff >= 150) return 'offshore'
+  if (diff >= 120) return 'cross-off'
+  if (diff >= 60) return 'cross-shore'
+  if (diff >= 30) return 'cross-on'
+  return 'onshore'
+}
+
+// Swell quality based on beach orientation
+const getSwellQuality = (swellDirection, beachOrientation) => {
+  if (!swellDirection || !beachOrientation) return 'unknown'
+  
+  let diff = Math.abs(swellDirection - beachOrientation)
+  if (diff > 180) diff = 360 - diff
+  
+  if (diff <= 30) return 'ideal'
+  if (diff <= 60) return 'good'
+  if (diff <= 90) return 'fair'
+  return 'poor'
+}
+
+// Colors for wind quality
+const getWindQualityColor = (quality) => {
+  const colors = {
+    'offshore': '#22c55e',
+    'cross-off': '#a3e635',
+    'cross-shore': '#facc15',
+    'cross-on': '#fb923c',
+    'onshore': '#ef4444',
+    'unknown': '#d1d5db'
+  }
+  return colors[quality] || '#d1d5db'
+}
+
+// Colors for swell quality
+const getSwellQualityColor = (quality) => {
+  const colors = {
+    'ideal': '#22c55e',
+    'good': '#a3e635',
+    'fair': '#facc15',
+    'poor': '#ef4444',
+    'unknown': '#d1d5db'
+  }
+  return colors[quality] || '#d1d5db'
+}
 
   // Convert wind from knots to mph
   const windMph = f.wind_speed ? Math.round(f.wind_speed * 1.151) : '--'
@@ -359,18 +528,22 @@ const displayForecast = computed(() => {
       : null
     const windReading = readings.find(r => r.wind_direction !== null)
 
-    return {
-      date,
-      dayName: isToday ? 'Today' : days[date.getDay()],
-      waveMin: isFinite(waveMin) ? waveMin : 0,
-      waveMax: isFinite(waveMax) ? waveMax : 0,
-      waveDisplay: formatWaveRange(waveMin, waveMax),
-      period: swellReading?.swell_period ? Math.round(swellReading.swell_period) : '--',
-      swellDir: swellReading?.swell_direction || 0,
-      windSpeed: avgWind ? Math.round(avgWind * 1.151) : '--', // knots to mph
-      windDir: windReading?.wind_direction || 0,
-      stars: ratingToStars(bestRating?.rating_key, bestRating?.rating_value)
-    }
+   // Inside your dailyData mapping, add:
+return {
+  date,
+  dayName: isToday ? 'Today' : days[date.getDay()],
+  waveMin: isFinite(waveMin) ? waveMin : 0,
+  waveMax: isFinite(waveMax) ? waveMax : 0,
+  waveDisplay: formatWaveRange(waveMin, waveMax),
+  period: swellReading?.swell_period ? Math.round(swellReading.swell_period) : '--',
+  swellDir: swellReading?.swell_direction || 0,
+  windSpeed: avgWind ? Math.round(avgWind * 1.151) : '--',
+  windDir: windReading?.wind_direction || 0,
+  stars: ratingToStars(bestRating?.rating_key, bestRating?.rating_value),
+  // Add these two new fields
+  windQuality: getWindQuality(windReading?.wind_direction, spot.value?.orientation),
+  swellQuality: getSwellQuality(swellReading?.swell_direction, spot.value?.orientation)
+}
   })
 
   // Sort by date and take first 5

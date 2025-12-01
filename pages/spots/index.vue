@@ -6,27 +6,33 @@
       <div class="mb-8">
         <h1 class="text-5xl font-display uppercase mb-2">Surf Spots</h1>
         <p class="text-gray-600 font-body">Real-time forecasts powered by Surfline data</p>
+        
       </div>
 
       <div v-if="loading" class="text-gray-500">Loading spots...</div>
       
+      
       <div v-else>
+       
         <!-- State Sections -->
         <div v-for="state in states" :key="state" class="mb-12">
           <h2 class="text-3xl font-display uppercase mb-4 pb-2 border-b-2 border-black">{{ state }}</h2>
           
           <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <NuxtLink 
-              v-for="spot in spotsByState[state]" 
-              :key="spot.id"
-              :to="`/spots/${spot.slug}`"
-              :class="[
-                'bg-white border-2 border-gray-200 hover:border-black p-4 transition-all group',
-                'border-l-4',
-                getRatingBorderColor(spot.forecast?.rating_key)
-              ]"
-            >
-              <div class="flex justify-between items-start mb-3">
+           <NuxtLink 
+  v-for="spot in spotsByState[state]" 
+  :key="spot.id"
+  :to="`/spots/${spot.slug}`"
+  class="relative bg-white border-2 border-gray-200 hover:border-black p-4 transition-all group overflow-hidden"
+>
+
+  <!-- Rating color bar -->
+  <div 
+    :style="{ backgroundColor: getRatingColor(spot.forecast?.rating_key) }"
+    class="absolute left-0 top-0 bottom-0 w-1.5"
+  ></div>
+  
+  <div class="flex justify-between items-start mb-3">
                 <div>
                   <h3 class="font-bold text-lg group-hover:underline">{{ spot.name }}</h3>
                   <p class="text-sm text-gray-500">{{ spot.region }}</p>
@@ -35,11 +41,9 @@
                   <p class="text-2xl font-black">{{ formatWaveRange(spot.forecast.wave_min, spot.forecast.wave_max) }}</p>
                   <div class="flex items-center justify-end gap-1.5">
                     <span 
-                      :class="[
-                        'inline-block w-2 h-2 rounded-full',
-                        getRatingDotColor(spot.forecast?.rating_key)
-                      ]"
-                    ></span>
+  :style="{ backgroundColor: getRatingColor(spot.forecast?.rating_key) }"
+  class="inline-block w-2 h-2 rounded-full"
+></span>
                     <p class="text-xs text-gray-500 capitalize">{{ formatRating(spot.forecast.rating_key) }}</p>
                   </div>
                 </div>
@@ -73,32 +77,35 @@ const supabase = useSupabaseClient()
 const spots = ref([])
 const loading = ref(true)
 
-// Rating color mapping - left border
-const getRatingBorderColor = (rating) => {
+const getRatingColor = (rating) => {
+  if (!rating) return '#d1d5db'
+  
+  const normalized = rating.toLowerCase()
+  
   const colors = {
-    'epic': 'border-l-green-500',
-    'good': 'border-l-green-400',
-    'fair_to_good': 'border-l-lime-400',
-    'fair': 'border-l-yellow-400',
-    'poor_to_fair': 'border-l-orange-400',
-    'poor': 'border-l-red-400',
-    'flat': 'border-l-gray-300',
+    'epic': '#22c55e',
+    'good': '#4ade80',
+    'fair_to_good': '#a3e635',
+    'fair': '#facc15',
+    'poor_to_fair': '#fb923c',
+    'poor': '#f87171',
+    'very_poor': '#ef4444',
+    'flat': '#d1d5db',
   }
-  return colors[rating] || 'border-l-gray-300'
+  return colors[normalized] || '#d1d5db'
 }
-
-// Rating color mapping - dot indicator
-const getRatingDotColor = (rating) => {
+// Rating color mapping - dot indicator (inline style)
+const getRatingDotStyle = (rating) => {
   const colors = {
-    'epic': 'bg-green-500',
-    'good': 'bg-green-400',
-    'fair_to_good': 'bg-lime-400',
-    'fair': 'bg-yellow-400',
-    'poor_to_fair': 'bg-orange-400',
-    'poor': 'bg-red-400',
-    'flat': 'bg-gray-300',
+    'epic': '#22c55e',
+    'good': '#4ade80',
+    'fair_to_good': '#a3e635',
+    'fair': '#facc15',
+    'poor_to_fair': '#fb923c',
+    'poor': '#f87171',
+    'flat': '#d1d5db',
   }
-  return colors[rating] || 'bg-gray-300'
+  return { backgroundColor: colors[rating] || '#d1d5db' }
 }
 
 // Format rating text

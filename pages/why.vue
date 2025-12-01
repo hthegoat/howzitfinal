@@ -245,16 +245,7 @@
 </template>
 
 <script setup>
-import MarketingSection from '~/components/marketing/MarketingSection.vue'
-import ManifestoHeading from '~/components/marketing/ManifestoHeading.vue'
-import ProblemCard from '~/components/marketing/ProblemCard.vue'
-import ComparisonBlock from '~/components/marketing/ComparisonBlock.vue'
-import PullQuote from '~/components/marketing/PullQuote.vue'
-import DataBadge from '~/components/marketing/DataBadge.vue'
-import StampBadge from '~/components/marketing/StampBadge.vue'
-import WaveMarquee from '~/components/marketing/WaveMarquee.vue'
-import IconGrid from '~/components/marketing/IconGrid.vue'
-import StatBlock from '~/components/marketing/StatBlock.vue'
+
 
 useHead({
   title: 'Why Howzit - Our Philosophy on Surf Forecasting',

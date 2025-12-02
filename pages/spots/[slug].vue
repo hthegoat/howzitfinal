@@ -27,19 +27,20 @@
 </div>
         <!-- 5-Day Forecast -->
    <!-- Desktop/Tablet grid -->
+<!-- 5-Day Forecast -->
+<!-- Desktop/Tablet grid -->
 <div class="hidden sm:grid sm:grid-cols-3 md:grid-cols-5 gap-0 divide-x divide-gray-200">
-  <div 
-    v-for="(day, index) in displayForecast" 
-   :key="index"
+ <div 
+  v-for="(day, index) in displayForecast" 
+  :key="index"
   @click="selectDay(day)"
-  class="cursor-pointer relative text-center p-3 lg:p-4 bg-white"
-  :class="selectedDay?.dayName === day.dayName ? 'ring-2 ring-black' : 'hover:bg-gray-50'"
-  >
-    <!-- Color bar -->
-    <div 
-      :style="{ backgroundColor: getStarsColor(day.stars) }"
-      class="absolute left-0 top-0 bottom-0 w-1"
-    ></div>
+  class="cursor-pointer relative text-center p-3 lg:p-4 bg-white transition-all duration-200"
+  :style="{ borderTopWidth: '4px', borderTopColor: getStarsColor(day.stars) }"
+  :class="selectedDay?.dayName === day.dayName 
+    ? 'shadow-lg -translate-y-1 ring-2 ring-black z-10' 
+    : 'hover:shadow-md hover:-translate-y-0.5'"
+>
+    
 
     <p class="font-bold text-xs sm:text-sm mb-1 sm:mb-2 uppercase">{{ day.dayName }}</p>
     <div class="flex justify-center mb-1 sm:mb-2">
@@ -64,6 +65,76 @@
         class="w-1.5 h-1.5 rounded-full"
       ></span>
       <span class="text-[10px] sm:text-xs text-gray-600 font-mono">{{ formatDirection(day.swellDir) }} {{ day.swellQuality }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Hourly Detail - OUTSIDE the grid, desktop only -->
+<!-- Expanded Detail (accordion content) -->
+<div 
+  v-if="selectedDay?.dayName === day.dayName && hourlyData"
+  class="bg-gray-50 p-4 border-t border-gray-200"
+>
+  <!-- Wave Height Chart -->
+  <div class="mb-6">
+    <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Wave Height (ft)</p>
+    <div class="h-32">
+      <canvas ref="waveChartRef"></canvas>
+    </div>
+  </div>
+  
+  <!-- Wind Icons Row -->
+  <div class="mb-6">
+    <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Wind</p>
+    <div class="flex justify-between overflow-x-auto">
+      <div 
+        v-for="hour in hourlyData" 
+        :key="hour.hour"
+        class="flex flex-col items-center min-w-[40px]"
+      >
+        <Windarrow 
+          :degrees="hour.windDirection" 
+          :speed="hour.windSpeed" 
+          class="w-5 h-5"
+        />
+        <span class="text-xs font-mono mt-1">{{ hour.windSpeed }}</span>
+        <span class="text-[10px] text-gray-400">{{ formatHour(hour.hour) }}</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Tides & Sun -->
+  <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+    <!-- Tides -->
+    <div>
+      <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Tides</p>
+      <div class="space-y-1 font-mono text-sm">
+        <div v-for="tide in selectedDayTides.high" :key="tide.timestamp" class="flex gap-2">
+          <span class="text-gray-400">High:</span>
+          <span class="font-bold">{{ formatTime(tide.timestamp) }}</span>
+          <span class="text-gray-400">{{ tide.height }}ft</span>
+        </div>
+        <div v-for="tide in selectedDayTides.low" :key="tide.timestamp" class="flex gap-2">
+          <span class="text-gray-400">Low:</span>
+          <span class="font-bold">{{ formatTime(tide.timestamp) }}</span>
+          <span class="text-gray-400">{{ tide.height }}ft</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Sun -->
+    <div v-if="sunData">
+      <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Sun</p>
+      <div class="space-y-1 font-mono text-sm">
+        <div class="flex gap-2">
+          <span class="text-gray-400">Sunrise:</span>
+          <span class="font-bold">{{ formatTime(sunData.sunrise) }}</span>
+        </div>
+        <div class="flex gap-2">
+          <span class="text-gray-400">Sunset:</span>
+          <span class="font-bold">{{ formatTime(sunData.sunset) }}</span>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -151,6 +222,7 @@ const surflineForecasts = ref([])
 const surflineTides = ref([])
 const buoyReading = ref(null)
 const forecastLoading = ref(true)
+import { nextTick } from 'vue'
 
 
 import { Chart, registerables } from 'chart.js'
@@ -161,15 +233,24 @@ const { hourlyData, loading: hourlyLoading, fetchHourlyForecast, formatHour } = 
 const selectedDay = ref(null)
 const waveChartRef = ref(null)
 let waveChart = null
-
 const selectDay = async (day) => {
+  if (!day) return
+  
+  console.log('selectDay called!', day)
+  
   if (selectedDay.value?.dayName === day.dayName) {
     selectedDay.value = null
     return
   }
   
   selectedDay.value = day
+  // ... rest
+
+  console.log('Fetching hourly for:', spot.value.latitude, spot.value.longitude, day.date)
+  
   await fetchHourlyForecast(spot.value.latitude, spot.value.longitude, day.date)
+  
+  console.log('Hourly data received:', hourlyData.value)
   
   nextTick(() => {
     renderWaveChart()
@@ -185,6 +266,11 @@ const renderWaveChart = () => {
   
   const ctx = waveChartRef.value.getContext('2d')
   
+  // Create gradient
+  const gradient = ctx.createLinearGradient(0, 0, 0, 128)
+  gradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)')
+  gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)')
+  
   waveChart = new Chart(ctx, {
     type: 'line',
     data: {
@@ -192,34 +278,94 @@ const renderWaveChart = () => {
       datasets: [{
         label: 'Wave Height',
         data: hourlyData.value.map(h => h.waveHeight),
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        borderColor: '#000',
+        borderWidth: 2,
+        backgroundColor: gradient,
         fill: true,
         tension: 0.4,
-        pointRadius: 3,
-        pointBackgroundColor: '#3b82f6'
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: '#000',
+        pointHoverBorderColor: '#fff',
+        pointHoverBorderWidth: 2
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: {
+        intersect: false,
+        mode: 'index'
+      },
       plugins: {
-        legend: { display: false }
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#000',
+          titleFont: { family: 'JetBrains Mono', size: 11 },
+          bodyFont: { family: 'JetBrains Mono', size: 13, weight: 'bold' },
+          padding: 10,
+          displayColors: false,
+          callbacks: {
+            title: (items) => items[0].label,
+            label: (item) => `${item.raw}ft`
+          }
+        }
       },
       scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            callback: (val) => val + 'ft'
-          }
-        },
-        x: {
-          grid: { display: false }
-        }
-      }
+  y: {
+    beginAtZero: true,
+    max: 10,
+    grid: { color: '#e5e7eb' },
+    border: { display: false },
+    ticks: {
+      font: { family: 'JetBrains Mono', size: 10 },
+      stepSize: 2,
+      callback: (val) => val + 'ft'
+    }
+  },
+  x: {
+    grid: { display: false },
+    border: { display: false },
+    ticks: {
+      font: { family: 'JetBrains Mono', size: 10 },
+      maxRotation: 0
+    }
+  }
+}
     }
   })
 }
+
+
+
+//////////////
+
+// Get tides for selected day
+const selectedDayTides = computed(() => {
+  if (!selectedDay.value?.date || !surflineTides.value?.length) {
+    return { high: [], low: [] }
+  }
+  
+  const dayStr = selectedDay.value.date.toDateString()
+  const dayTides = surflineTides.value.filter(t => 
+    new Date(t.timestamp).toDateString() === dayStr
+  )
+  
+  return {
+    high: dayTides.filter(t => t.type === 'HIGH'),
+    low: dayTides.filter(t => t.type === 'LOW')
+  }
+})
+
+const formatTime = (timestamp) => {
+  return new Date(timestamp).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  })
+}
+
+
 
 
 // Fetch spot data from Supabase
@@ -506,6 +652,13 @@ const displayForecast = computed(() => {
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   const today = new Date()
   
+// Auto-select first day when forecast loads
+watch(displayForecast, async (forecast) => {
+  if (forecast && forecast.length > 0 && !selectedDay.value) {
+    await selectDay(forecast[0])
+  }
+}, { immediate: true })
+
   // Group by day
   const byDay = {}
   surflineForecasts.value.forEach(f => {

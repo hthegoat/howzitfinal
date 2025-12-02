@@ -17,109 +17,53 @@
           :timestamp="latestForecast?.fetched_at"
         />
 <!-- AI Summary -->
-<div v-if="spotSummary" class="bg-yellow-50 border-2 border-black p-4 mb-6">
-  <p class="font-bold text-sm mb-2">📋 This Week's Outlook</p>
-  <p class="text-gray-800">{{ spotSummary.summary }}</p>
-  <p class="text-xs text-gray-400 mt-2">Updated {{ new Date(spotSummary.generated_at).toLocaleString() }}</p>
+<div 
+  v-if="spotSummary" 
+  class="bg-black text-white border-2 border-black p-4 mb-6"
+>
+  <p class="font-bold text-sm mb-2 uppercase tracking-wide">This Week's Outlook</p>
+  <p class="text-gray-200">{{ spotSummary.summary }}</p>
+  <p class="text-xs text-gray-500 mt-2 font-mono">Updated {{ new Date(spotSummary.generated_at).toLocaleString() }}</p>
 </div>
         <!-- 5-Day Forecast -->
-      <div class="bg-white rounded-lg p-3 sm:p-4 lg:p-6 shadow-sm border border-gray-100 mb-4 sm:mb-6">
-  <h3 class="font-bold text-base sm:text-lg lg:text-xl mb-3 sm:mb-4 lg:mb-6">5-Day Forecast</h3>
-  
-  <div v-if="forecastLoading" class="text-gray-500 text-center py-6 sm:py-8">
-    Loading forecast...
-  </div>
-  
-  <!-- Desktop/Tablet grid -->
-  <div class="hidden sm:grid sm:grid-cols-3 md:grid-cols-5 gap-2 lg:gap-4">
+   <!-- Desktop/Tablet grid -->
+<div class="hidden sm:grid sm:grid-cols-3 md:grid-cols-5 gap-0 divide-x divide-gray-200">
+  <div 
+    v-for="(day, index) in displayForecast" 
+   :key="index"
+  @click="selectDay(day)"
+  class="cursor-pointer relative text-center p-3 lg:p-4 bg-white"
+  :class="selectedDay?.dayName === day.dayName ? 'ring-2 ring-black' : 'hover:bg-gray-50'"
+  >
+    <!-- Color bar -->
     <div 
-      v-for="(day, index) in displayForecast" 
-      :key="index"
-      class="relative overflow-hidden text-center p-3 lg:p-4 rounded-lg border border-gray-100 transition-colors"
-      :class="index === 0 ? 'bg-gray-50 border-2 border-black' : 'hover:bg-gray-50'"
-    >
-      <!-- Color bar -->
-      <div 
-        :style="{ backgroundColor: getStarsColor(day.stars) }"
-        class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-lg"
-      ></div>
+      :style="{ backgroundColor: getStarsColor(day.stars) }"
+      class="absolute left-0 top-0 bottom-0 w-1"
+    ></div>
 
-      <p class="font-bold text-xs sm:text-sm mb-1 sm:mb-2">{{ day.dayName }}</p>
-      <div class="flex justify-center mb-1 sm:mb-2">
-        <Starrating :rating="day.stars" />
-      </div>
-      <p class="text-lg sm:text-xl lg:text-2xl font-black mb-1">{{ day.waveDisplay }}</p>
-      <p class="text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3">{{ day.period }}s period</p>
-      
-      <!-- Wind with quality -->
-      <div class="flex justify-center items-center gap-1 mb-1">
-        <span 
-          :style="{ backgroundColor: getWindQualityColor(day.windQuality) }"
-          class="w-1.5 h-1.5 rounded-full"
-        ></span>
-        <span class="text-[10px] sm:text-xs text-gray-600">{{ day.windSpeed }}mph {{ day.windQuality }}</span>
-      </div>
-      
-      <!-- Swell with quality -->
-      <div class="flex justify-center items-center gap-1">
-        <span 
-          :style="{ backgroundColor: getSwellQualityColor(day.swellQuality) }"
-          class="w-1.5 h-1.5 rounded-full"
-        ></span>
-        <span class="text-[10px] sm:text-xs text-gray-600">{{ formatDirection(day.swellDir) }} {{ day.swellQuality }}</span>
-      </div>
+    <p class="font-bold text-xs sm:text-sm mb-1 sm:mb-2 uppercase">{{ day.dayName }}</p>
+    <div class="flex justify-center mb-1 sm:mb-2">
+      <Starrating :rating="day.stars" />
     </div>
-  </div>
-
-  <!-- Mobile scroll -->
-  <div class="sm:hidden -mx-3 px-3">
-    <div class="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
-      <div 
-        v-for="(day, index) in displayForecast" 
-        :key="index"
-        class="relative overflow-hidden flex-shrink-0 w-[calc(50%-4px)] snap-start text-center p-3 rounded-lg border border-gray-100"
-        :class="index === 0 ? 'bg-gray-50 border-2 border-black' : ''"
-      >
-        <!-- Color bar -->
-        <div 
-          :style="{ backgroundColor: getStarsColor(day.stars) }"
-          class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-lg"
-        ></div>
-
-        <p class="font-bold text-xs mb-1">{{ day.dayName }}</p>
-        <div class="flex justify-center mb-1 scale-90">
-          <Starrating :rating="day.stars" />
-        </div>
-        <p class="text-lg font-black mb-0.5">{{ day.waveDisplay }}</p>
-        <p class="text-[10px] text-gray-500 mb-2">{{ day.period }}s period</p>
-        
-        <!-- Wind with quality -->
-        <div class="flex justify-center items-center gap-1 mb-1">
-          <span 
-            :style="{ backgroundColor: getWindQualityColor(day.windQuality) }"
-            class="w-1.5 h-1.5 rounded-full"
-          ></span>
-          <span class="text-[10px] text-gray-600">{{ day.windSpeed }}mph {{ day.windQuality }}</span>
-        </div>
-        
-        <!-- Swell with quality -->
-        <div class="flex justify-center items-center gap-1">
-          <span 
-            :style="{ backgroundColor: getSwellQualityColor(day.swellQuality) }"
-            class="w-1.5 h-1.5 rounded-full"
-          ></span>
-          <span class="text-[10px] text-gray-600">{{ formatDirection(day.swellDir) }} {{ day.swellQuality }}</span>
-        </div>
-      </div>
+    <p class="text-lg sm:text-xl lg:text-2xl font-black mb-1">{{ day.waveDisplay }}</p>
+    <p class="text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3 font-mono">{{ day.period }}s period</p>
+    
+    <!-- Wind with quality -->
+    <div class="flex justify-center items-center gap-1 mb-1">
+      <span 
+        :style="{ backgroundColor: getWindQualityColor(day.windQuality) }"
+        class="w-1.5 h-1.5 rounded-full"
+      ></span>
+      <span class="text-[10px] sm:text-xs text-gray-600 font-mono">{{ day.windSpeed }}mph {{ day.windQuality }}</span>
     </div>
-    <!-- Scroll indicator dots -->
-    <div class="flex justify-center gap-1.5 mt-2">
-      <div 
-        v-for="i in Math.ceil(displayForecast.length / 2)" 
-        :key="i"
-        class="w-1.5 h-1.5 rounded-full bg-gray-300"
-        :class="{ 'bg-gray-600': i === 1 }"
-      />
+    
+    <!-- Swell with quality -->
+    <div class="flex justify-center items-center gap-1">
+      <span 
+        :style="{ backgroundColor: getSwellQualityColor(day.swellQuality) }"
+        class="w-1.5 h-1.5 rounded-full"
+      ></span>
+      <span class="text-[10px] sm:text-xs text-gray-600 font-mono">{{ formatDirection(day.swellDir) }} {{ day.swellQuality }}</span>
     </div>
   </div>
 </div>
@@ -207,6 +151,76 @@ const surflineForecasts = ref([])
 const surflineTides = ref([])
 const buoyReading = ref(null)
 const forecastLoading = ref(true)
+
+
+import { Chart, registerables } from 'chart.js'
+Chart.register(...registerables)
+
+const { hourlyData, loading: hourlyLoading, fetchHourlyForecast, formatHour } = useHourlyForecast()
+
+const selectedDay = ref(null)
+const waveChartRef = ref(null)
+let waveChart = null
+
+const selectDay = async (day) => {
+  if (selectedDay.value?.dayName === day.dayName) {
+    selectedDay.value = null
+    return
+  }
+  
+  selectedDay.value = day
+  await fetchHourlyForecast(spot.value.latitude, spot.value.longitude, day.date)
+  
+  nextTick(() => {
+    renderWaveChart()
+  })
+}
+
+const renderWaveChart = () => {
+  if (!waveChartRef.value || !hourlyData.value) return
+  
+  if (waveChart) {
+    waveChart.destroy()
+  }
+  
+  const ctx = waveChartRef.value.getContext('2d')
+  
+  waveChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: hourlyData.value.map(h => formatHour(h.hour)),
+      datasets: [{
+        label: 'Wave Height',
+        data: hourlyData.value.map(h => h.waveHeight),
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 3,
+        pointBackgroundColor: '#3b82f6'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: (val) => val + 'ft'
+          }
+        },
+        x: {
+          grid: { display: false }
+        }
+      }
+    }
+  })
+}
+
 
 // Fetch spot data from Supabase
 const { data } = await useAsyncData(`spot-${route.params.slug}`, async () => {

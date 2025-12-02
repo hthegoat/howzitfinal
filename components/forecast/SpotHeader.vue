@@ -1,7 +1,10 @@
 <template>
-  <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-100 mb-6">
+  <div 
+    class="bg-white p-6 border-2 border-black mb-6"
+    :style="{ borderTopColor: ratingBorderColor, borderTopWidth: '4px' }"
+  >
     <!-- Breadcrumbs -->
-    <nav class="text-sm text-gray-500 mb-4">
+    <nav class="text-sm text-gray-500 mb-4 font-mono">
       <NuxtLink to="/" class="hover:text-black">Home</NuxtLink>
       <span class="mx-2">/</span>
       <NuxtLink to="/spots" class="hover:text-black">Spots</NuxtLink>
@@ -11,27 +14,27 @@
 
     <!-- Title + Rating on same line -->
     <div class="flex flex-wrap items-center gap-3 mb-2">
-      <h1 class="text-4xl font-black capitalize">{{ spotName }}</h1>
+      <h1 class="text-4xl font-black uppercase tracking-tight">{{ spotName }}</h1>
       <div class="flex items-center gap-2">
         <Starrating :rating="rating" />
-        <span class="text-sm font-medium" :class="ratingColorClass">{{ ratingLabel }}</span>
+        <span class="text-sm font-bold uppercase" :class="ratingColorClass">{{ ratingLabel }}</span>
       </div>
     </div>
     
-    <p class="text-gray-500 mb-8">{{ region }} • Buoy: {{ buoyId }}</p>
+    <p class="text-gray-500 mb-8 font-mono text-sm">{{ region }} • Buoy: {{ buoyId }}</p>
 
     <!-- Metrics Grid -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-6">
       <div>
-        <p class="text-sm text-gray-500 mb-1">Wave Height</p>
+        <p class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Wave Height</p>
         <p class="text-3xl font-black">{{ current.height }}<span class="text-lg font-normal text-gray-500 ml-1">ft</span></p>
       </div>
       <div>
-        <p class="text-sm text-gray-500 mb-1">Period</p>
+        <p class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Period</p>
         <p class="text-3xl font-black">{{ current.period }}<span class="text-lg font-normal text-gray-500 ml-1">s</span></p>
       </div>
       <div>
-        <p class="text-sm text-gray-500 mb-1">Wind</p>
+        <p class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Wind</p>
         <div class="flex items-center gap-2">
           <p class="text-3xl font-black">{{ current.wind.speed }}<span class="text-lg font-normal text-gray-500 ml-1">mph</span></p>
           <Windarrow :degrees="current.wind.degrees" :speed="Number(current.wind.speed)" />
@@ -39,12 +42,12 @@
         <p class="text-sm text-gray-500">{{ current.wind.direction }}</p>
       </div>
       <div>
-        <p class="text-sm text-gray-500 mb-1">Water Temp</p>
+        <p class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Water Temp</p>
         <p class="text-3xl font-black">{{ current.temp }}<span class="text-lg font-normal text-gray-500 ml-1">°F</span></p>
       </div>
     </div>
 
-    <div class="text-xs text-gray-400">
+    <div class="text-xs text-gray-400 font-mono">
       Last updated: {{ formatTimestamp(timestamp) }}
     </div>
   </div>
@@ -84,7 +87,16 @@ const props = defineProps({
   }
 })
 
-// Color class for rating label
+const ratingBorderColor = computed(() => {
+  const r = props.rating
+  if (r >= 4.5) return '#22c55e'
+  if (r >= 3.5) return '#4ade80'
+  if (r >= 2.5) return '#a3e635'
+  if (r >= 1.5) return '#facc15'
+  if (r >= 0.5) return '#fb923c'
+  return '#f87171'
+})
+
 const ratingColorClass = computed(() => {
   if (props.rating >= 4) return 'text-emerald-600'
   if (props.rating >= 3) return 'text-green-600'

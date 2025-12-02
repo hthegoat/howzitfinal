@@ -47,6 +47,46 @@
       </div>
     </div>
 
+    <!-- Today's Hourly -->
+  <!-- Today's Hourly -->
+<div v-if="hourlyData && hourlyData.length" class="border-t border-gray-200 pt-4 mb-4">
+  
+  <!-- Wave Height Row -->
+  <div class="mb-4">
+    <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Wave Height (ft)</p>
+    <div class="flex justify-between overflow-x-auto gap-1">
+      <div 
+        v-for="hour in hourlyData.slice(0, 12)" 
+        :key="'wave-' + hour.hour"
+        class="flex flex-col items-center min-w-[36px]"
+      >
+        <span class="text-sm font-bold">{{ adjustedWaveHeight(hour.waveHeight) }}</span>
+        <span class="text-[10px] text-gray-400 font-mono">{{ formatHourLabel(hour.hour) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wind Row -->
+  <div>
+    <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Wind</p>
+    <div class="flex justify-between overflow-x-auto gap-1">
+      <div 
+        v-for="hour in hourlyData.slice(0, 12)" 
+        :key="'wind-' + hour.hour"
+        class="flex flex-col items-center min-w-[36px]"
+      >
+        <Windarrow 
+          :degrees="hour.windDirection" 
+          :speed="hour.windSpeed" 
+          class="w-5 h-5"
+        />
+        <span class="text-xs font-mono mt-1">{{ hour.windSpeed }}</span>
+        <span class="text-[10px] text-gray-400 font-mono">{{ formatHourLabel(hour.hour) }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
     <div class="text-xs text-gray-400 font-mono">
       Last updated: {{ formatTimestamp(timestamp) }}
     </div>
@@ -57,34 +97,15 @@
 import { computed } from 'vue'
 
 const props = defineProps({
-  spotName: {
-    type: String,
-    required: true
-  },
-  region: {
-    type: String,
-    default: ''
-  },
-  buoyId: {
-    type: String,
-    default: ''
-  },
-  current: {
-    type: Object,
-    required: true
-  },
-  rating: {
-    type: Number,
-    default: 0
-  },
-  ratingLabel: {
-    type: String,
-    default: 'Unknown'
-  },
-  timestamp: {
-    type: String,
-    default: null
-  }
+  spotName: { type: String, required: true },
+  region: { type: String, default: '' },
+  buoyId: { type: String, default: '' },
+  current: { type: Object, required: true },
+  rating: { type: Number, default: 0 },
+  ratingLabel: { type: String, default: 'Unknown' },
+  timestamp: { type: String, default: null },
+  hourlyData: { type: Array, default: () => [] },
+  orientation: { type: Number, default: null }
 })
 
 const ratingBorderColor = computed(() => {
@@ -96,6 +117,12 @@ const ratingBorderColor = computed(() => {
   if (r >= 0.5) return '#fb923c'
   return '#f87171'
 })
+
+const adjustedWaveHeight = (height) => {
+  if (!height) return '--'
+  const adjusted = (parseFloat(height) * 0.5).toFixed(1)
+  return adjusted
+}
 
 const ratingColorClass = computed(() => {
   if (props.rating >= 4) return 'text-emerald-600'
@@ -114,4 +141,102 @@ const formatTimestamp = (ts) => {
     minute: '2-digit'
   })
 }
+
+const renderHeaderChart = () => {
+  if (!headerChartRef.value || !props.hourlyData?.length) return
+  
+  if (headerChart) headerChart.destroy()
+  
+  const ctx = headerChartRef.value.getContext('2d')
+  
+  // Color based on wind quality
+  const getPointColor = (hour) => {
+    // We need orientation to calculate - pass it as a prop
+    if (!props.orientation) return '#3b82f6' // default blue
+    
+    const windDir = hour.windDirection
+    if (!windDir) return '#3b82f6'
+    
+    let diff = Math.abs(windDir - props.orientation)
+    if (diff > 180) diff = 360 - diff
+    
+    if (diff >= 120) return '#22c55e' // green - offshore/clean
+    if (diff >= 60) return '#3b82f6'  // blue - cross-shore/fair
+    return '#ef4444'                   // red - onshore/choppy
+  }
+  
+  // Create segment colors array
+  const colors = props.hourlyData.map(h => getPointColor(h))
+  
+  headerChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: props.hourlyData.map(h => formatHourLabel(h.hour)),
+      datasets: [{
+        data: props.hourlyData.map(h => h.waveHeight ? (parseFloat(h.waveHeight) * 0.5).toFixed(1) : null),
+        borderColor: '#000',
+        borderWidth: 1,
+        segment: {
+          backgroundColor: (ctx) => {
+            const index = ctx.p0DataIndex
+            return colors[index] + '80' // add transparency
+          }
+        },
+        backgroundColor: colors.map(c => c + '80'),
+        fill: true,
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        pointHoverBackgroundColor: '#000'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { intersect: false, mode: 'index' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#000',
+          titleFont: { family: 'JetBrains Mono', size: 10 },
+          bodyFont: { family: 'JetBrains Mono', size: 12, weight: 'bold' },
+          padding: 8,
+          displayColors: false,
+          callbacks: {
+            label: (item) => `${item.raw}ft`
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 10,
+          grid: { color: '#e5e7eb' },
+          border: { display: false },
+          ticks: {
+            font: { family: 'JetBrains Mono', size: 9 },
+            stepSize: 2,
+            callback: (val) => val + 'ft'
+          }
+        },
+        x: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: {
+            font: { family: 'JetBrains Mono', size: 9 },
+            maxRotation: 0
+          }
+        }
+      }
+    }
+  })
+}
+
+const formatHourLabel = (hour) => {
+  if (hour === 0) return '12a'
+  if (hour === 12) return '12p'
+  if (hour < 12) return `${hour}a`
+  return `${hour - 12}p`
+}
 </script>
+
